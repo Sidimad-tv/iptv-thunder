@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "IPTV Thunder",
+  "version": "1.0.0",
+  "identifier": "com.iptv.thunder",
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "pnpm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http: https: asset: http://asset.localhost; connect-src 'self' http: https: ws: wss: ipc: http://ipc.localhost; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';",
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": ["**/*"],
+          "requireLiteralLeadingDot": false
+        }
+      },
+      "capabilities": ["desktop", "mobile"]
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "IPTV Thunder",
+        "width": 1200,
+        "height": 720,
+        "minWidth": 900,
+        "minHeight": 560,
+        "visible": true,
+        "resizable": true,
+        "decorations": true,
+        "transparent": true,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "center": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "resources": [
+      "lib/**/*"
+    ]
+  }
+}
