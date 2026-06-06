@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* stylelint-disable at-rule-no-unknown */
+@theme {
+  --radius-sm: 0.5rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+}
+
+@variant dark (.dark &);
+
+/* Semantic design tokens - single source of truth */
+:root {
+  --ui-scale: 1;
+
+  /* Dark mode (default) */
+  --color-background: hsl(0 0% 0%);
+  --color-foreground: hsl(0 0% 100%);
+  --color-surface: hsl(0 0% 5%);
+  --color-surface-elevated: hsl(0 0% 10%);
+  --color-text-muted: hsl(0 0% 70%);
+  --color-card: hsl(0 0% 5%);
+  --color-card-foreground: hsl(0 0% 100%);
+  --color-popover: hsl(0 0% 5%);
+  --color-popover-foreground: hsl(0 0% 100%);
+  --color-primary: hsl(142 50% 20%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(0 0% 10%);
+  --color-secondary-foreground: hsl(0 0% 100%);
+  --color-muted: hsl(0 0% 15%);
+  --color-muted-foreground: hsl(0 0% 70%);
+  --color-accent: hsl(0 0% 15%);
+  --color-accent-foreground: hsl(0 0% 100%);
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(0 0% 20%);
+  --color-input: hsl(0 0% 20%);
+  --color-ring: hsl(142 50% 20%);
+  --focus-ring: 0 0 0 3px hsl(142 50% 30%);
+}
+
+/* Light mode */
+:root.light {
+  --color-background: hsl(55 10% 96% / 1);
+  --color-foreground: hsl(55 10% 18% / 1);
+  --color-card: hsl(55 10% 94% / 1);
+  --color-card-foreground: hsl(55 10% 18% / 1);
+  --color-popover: hsl(55 10% 98% / 1);
+  --color-popover-foreground: hsl(55 10% 18% / 1);
+  --color-primary: hsl(142 50% 28% / 1);
+  --color-primary-foreground: hsl(55 10% 98% / 1);
+  --color-secondary: hsl(55 10% 90% / 1);
+  --color-secondary-foreground: hsl(55 10% 25% / 1);
+  --color-muted: hsl(55 10% 88% / 1);
+  --color-muted-foreground: hsl(55 10% 42% / 1);
+  --color-accent: hsl(55 10% 88% / 1);
+  --color-accent-foreground: hsl(55 10% 18% / 1);
+  --color-destructive: hsl(0 62.8% 45%);
+  --color-destructive-foreground: hsl(55 10% 98% / 1);
+  --color-border: hsl(55 10% 85%);
+  --color-input: hsl(55 10% 85%);
+  --color-ring: hsl(142 50% 35%);
+  --focus-ring: 0 0 0 3px hsl(142 50% 45%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    color: var(--color-foreground);
+    background: transparent;
+  }
+  :root {
+    color-scheme: dark;
+  }
+  :root.light {
+    color-scheme: light;
+  }
+}
+
+/* Force style updates when theme changes - removed universal selector for performance */
+
+/* TV Navigation Styles */
+[data-tv-focusable] {
+  outline: 3px solid transparent;
+  outline-offset: 2px;
+  transition: box-shadow 0.15s ease, outline-color 0.15s ease;
+}
+
+[data-tv-focusable]:focus,
+[data-tv-focusable].tv-focused {
+  outline: 3px solid #166534;
+  outline-offset: 2px;
+  box-shadow: 0 0 20px rgba(22, 101, 52, 0.5);
+  z-index: 10;
+}
+
+/* Override for search input - no focus effects */
+[data-tv-search]:focus {
+  outline: none;
+  box-shadow: none;
+  z-index: auto;
+}
+
+[data-tv-focusable]:focus-visible {
+  outline: 3px solid #166534;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  [data-tv-focusable] {
+    transition: none;
+  }
+  [data-tv-focusable]:focus,
+  [data-tv-focusable].tv-focused {
+    transform: none;
+  }
+}
+
+/* TV optimized button sizes - larger touch targets */
+@media (hover: none) and (pointer: coarse) {
+  [data-tv-focusable] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Hide scrollbar for TV interface */
+.tv-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.tv-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* UI scale helper - use on root layout wrapper */
+.ui {
+  font-size: calc(1rem * var(--ui-scale, 1));
+}
+
+/* Large desktop - scale up for better readability on larger screens */
+@media (min-width: 1440px) {
+  :root {
+    --ui-scale: 1;
+  }
+}
+
+/* Large desktop 4K - increase scale for TV viewing */
+@media (min-width: 2000px) and (max-width: 2559px) {
+  :root {
+    --ui-scale: 1.1;
+  }
+}
+
+/* 4K TV - larger UI for TV distance viewing */
+@media (min-width: 2560px) {
+  :root {
+    --ui-scale: 1.25;
+  }
+}
+
+/* Ultra large screens */
+@media (min-width: 3840px) {
+  :root {
+    --ui-scale: 1.3;
+  }
+}
+
+/* Scale entire app content for TV screens - with performance optimizations */
+@media (min-width: 1440px) {
+  .app-wrapper {
+    transform-origin: top left;
+    transform: scale(var(--ui-scale, 1));
+    width: calc(100% / var(--ui-scale, 1));
+    height: calc(100% / var(--ui-scale, 1));
+    overflow: hidden;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+}
+
+/* Android TV UI scaling - use viewport-based detection when possible */
+.app-wrapper.android-tv {
+  transform-origin: top left;
+  transform: scale(0.75);
+  width: calc(100% / 0.75);
+  height: calc(100% / 0.75);
+  overflow: hidden;
+  will-change: transform;
+  backface-visibility: hidden;
+}
