@@ -3,7 +3,7 @@ import { translations, SupportedLanguage, TranslationKey } from '@/lib/translati
 import { getSetting, setSetting } from '@/hooks/useSettings';
 
 // Global state for language synchronization
-let globalLanguage: SupportedLanguage = 'pl';
+let globalLanguage: SupportedLanguage = 'en';
 const listeners = new Set<(lang: SupportedLanguage) => void>();
 
 const subscribe = (callback: (lang: SupportedLanguage) => void) => {
@@ -46,7 +46,7 @@ export const useTranslation = () => {
   }, []);
 
   const t = useCallback((key: TranslationKey, values?: Record<string, string | number>): string => {
-    let text: string = translations[currentLang][key] || translations['pl'][key] || key;
+    let text: string = translations[currentLang][key] || translations['en'][key] || key;
     if (values) {
       Object.entries(values).forEach(([k, v]) => {
         text = text.replaceAll(`{{${k}}}`, String(v));
@@ -69,7 +69,7 @@ export const useTranslation = () => {
 };
 
 // Reset global language state (for testing)
-export const _resetLanguageState = (lang: SupportedLanguage = 'pl') => {
+export const _resetLanguageState = (lang: SupportedLanguage = 'en') => {
   globalLanguage = lang;
   listeners.clear();
 };

@@ -46,7 +46,7 @@ export interface AppSettings {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-  language: 'pl',
+  language: 'en',
   sidebarCollapsed: false,
   channelViewMode: 'grid',
   autoPlay: true,
@@ -96,7 +96,7 @@ export async function getSetting<K extends keyof AppSettings>(
 
   // Auto-detect language if not set
   if (key === 'language') {
-    const browserLang = navigator.language?.toLowerCase() || 'pl';
+    const browserLang = navigator.language?.toLowerCase() || 'en';
     let detectedLang: SupportedLanguage;
     if (browserLang.startsWith('pl')) {
       detectedLang = 'pl';
