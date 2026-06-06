@@ -491,6 +491,12 @@ async getVODDetails(vodId: string): Promise<StalkerVOD> {
       throw new Error('Request aborted');
     }
 
+    // Automatically inject mac and token into every request for proxy forwarding
+    if (!this.useTauri) {
+      if (!params.mac) params.mac = this.account.mac;
+      if (this.token && !params.token) params.token = this.token;
+    }
+
     // Debug tracking
     const ctx = createDebugRequestContext(params.action || endpoint, { endpoint, params });
     logDebugRequest(ctx);
