@@ -448,6 +448,8 @@ export class StalkerClient {
   async getVODCategories(): Promise<StalkerGenre[]> {
     await this.ensureAuthenticated();
 
+    await this.getProfileAndAuth().catch(() => {});
+
     const params = {
       type: 'vod',
       action: 'get_categories',

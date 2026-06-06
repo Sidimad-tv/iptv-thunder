@@ -130,6 +130,8 @@ export const getSeriesCategories = async (
     await client.handshake();
   }
 
+  await client.getProfileAndAuth().catch(() => {});
+
   const account = client.getAccount();
   const params = {
     type: 'series',
