@@ -200,7 +200,7 @@ export function useCategories(
     initCategoriesTable();
   }, []);
 
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = [], isLoading, error } = useQuery({
     queryKey: ['categories', type, portalId],
     queryFn: async () => {
       if (!portalId) {
@@ -267,5 +267,6 @@ export function useCategories(
     isLoading,
     refresh: (force?: boolean) => refreshMutation.mutate(force),
     isRefreshing: refreshMutation.isPending,
+    error,
   };
 }

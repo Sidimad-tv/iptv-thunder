@@ -448,10 +448,6 @@ export class StalkerClient {
   async getVODCategories(): Promise<StalkerGenre[]> {
     await this.ensureAuthenticated();
 
-    // Wywołaj getProfileAndAuth aby aktywować sesję - to może być wymagane aby dostać pełną listę kategorii
-    this.logger.debug('Calling getProfileAndAuth for VOD categories');
-    await this.getProfileAndAuth();
-
     const params = {
       type: 'vod',
       action: 'get_categories',
@@ -459,8 +455,8 @@ export class StalkerClient {
       JsHttpRequest: '1-xml',
     };
     const response = await this._makeRequest(params);
-    
-    return this.useTauri ? (response?.js || []) : (response.data?.js || []);
+    const js = this.useTauri ? response?.js : response.data?.js;
+    return Array.isArray(js) ? js : (js?.data || []);
   }
 
   /**

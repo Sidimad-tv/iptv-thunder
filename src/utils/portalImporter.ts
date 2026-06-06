@@ -56,7 +56,6 @@ function generateName(portalUrl: string, mac: string): string {
 }
 
 export function parseBlogPostHTML(html: string): BlogPortalEntry[] {
-  // Strip HTML tags, normalize whitespace
   const text = html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -67,7 +66,7 @@ export function parseBlogPostHTML(html: string): BlogPortalEntry[] {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"');
 
-  const seenUrls = new Set<string>();
+  const seen = new Set<string>();
   const entries: BlogPortalEntry[] = [];
   const lines = text.split('\n');
   let currentUrl: string | null = null;
@@ -83,13 +82,16 @@ export function parseBlogPostHTML(html: string): BlogPortalEntry[] {
     }
 
     const mac = extractMac(line);
-    if (mac && isStalkerMac(mac) && currentUrl && !seenUrls.has(currentUrl)) {
-      seenUrls.add(currentUrl);
-      entries.push({
-        name: generateName(currentUrl, mac),
-        portalUrl: currentUrl,
-        mac,
-      });
+    if (mac && isStalkerMac(mac) && currentUrl) {
+      const key = currentUrl + '|' + mac;
+      if (!seen.has(key)) {
+        seen.add(key);
+        entries.push({
+          name: generateName(currentUrl, mac),
+          portalUrl: currentUrl,
+          mac,
+        });
+      }
     }
   }
 
@@ -107,7 +109,7 @@ export async function fetchLatestBlogPortals(): Promise<BlogPortalEntry[]> {
       const html = await resp.text();
       const entries = parseBlogPostHTML(html);
       for (const entry of entries) {
-        const key = entry.portalUrl;
+        const key = entry.portalUrl + '|' + entry.mac;
         if (!seen.has(key)) {
           seen.add(key);
           allEntries.push(entry);

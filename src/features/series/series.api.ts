@@ -130,8 +130,6 @@ export const getSeriesCategories = async (
     await client.handshake();
   }
 
-  await client.getProfileAndAuth();
-
   const account = client.getAccount();
   const params = {
     type: 'series',
@@ -141,9 +139,8 @@ export const getSeriesCategories = async (
   };
 
   const response = await client._makeRequest(params);
-  return client.useTauri
-    ? response?.js || []
-    : response.data?.js || [];
+  const js = client.useTauri ? response?.js : response.data?.js;
+  return Array.isArray(js) ? js : (js?.data || []);
 };
 
 export const getSeriesDetails = async (client: StalkerClient, seriesId: string): Promise<StalkerVOD> => {

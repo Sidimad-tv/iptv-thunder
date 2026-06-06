@@ -336,7 +336,7 @@ function saveSeriesToDb(items: StalkerVOD[], categoryId: string, accountId: stri
 export const useSeriesCategories = (client: StalkerClient) => {
   const portalId = client?.getAccount()?.id || 'default';
 
-  const { categories, isLoading, refresh, isRefreshing } = useCategories(
+  const { categories, isLoading, refresh, isRefreshing, error } = useCategories(
     'series',
     portalId,
     async () => await getSeriesCategories(client),
@@ -347,7 +347,7 @@ export const useSeriesCategories = (client: StalkerClient) => {
     isLoading,
     refetch: refresh,
     isRefetching: isRefreshing,
-    error: null,
+    error,
   };
 };
 

@@ -8,3 +8,4 @@ dist-cache/
 .DS_Store
 .vercel/*
 !.vercel/project.json
+.vercel

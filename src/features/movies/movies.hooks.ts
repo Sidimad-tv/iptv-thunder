@@ -192,7 +192,7 @@ export const useMoviesAll = (client: StalkerClient, categoryId?: string, search?
 export const useMovieCategories = (client: StalkerClient) => {
   const portalId = client?.getAccount()?.id || 'default';
 
-  const { categories, isLoading, refresh, isRefreshing } = useCategories(
+  const { categories, isLoading, refresh, isRefreshing, error } = useCategories(
     'vod',
     portalId,
     async () => {
@@ -205,14 +205,14 @@ export const useMovieCategories = (client: StalkerClient) => {
     isLoading,
     refetch: refresh,
     isRefetching: isRefreshing,
-    error: null,
+    error,
   };
 };
 
 export const useMovieCategoriesWithError = (client: StalkerClient) => {
   const portalId = client?.getAccount()?.id || 'default';
 
-  const { categories, isLoading, refresh, isRefreshing } = useCategories(
+  const { categories, isLoading, refresh, isRefreshing, error } = useCategories(
     'vod',
     portalId,
     async () => {
@@ -225,6 +225,7 @@ export const useMovieCategoriesWithError = (client: StalkerClient) => {
     isLoading,
     refetch: refresh,
     isRefetching: isRefreshing,
+    error,
   };
 };
 
