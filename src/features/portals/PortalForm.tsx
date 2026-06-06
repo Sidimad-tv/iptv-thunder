@@ -231,7 +231,7 @@ export const PortalForm: React.FC<PortalFormProps> = ({ portal, onClose }) => {
               className={`w-full px-4 py-2.5 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 transition-all duration-200 ${
                 errors.name ? 'border-red-500' : 'border-slate-700'
               }`}
-              placeholder="np. Mój Portal IPTV"
+              placeholder="e.g. My IPTV Portal"
             />
             {errors.name && (
               <p className="mt-1.5 text-sm text-red-400">{errors.name}</p>
