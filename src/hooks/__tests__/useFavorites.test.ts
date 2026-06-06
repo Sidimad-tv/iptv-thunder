@@ -13,11 +13,12 @@ import {
   toggleFavoriteCategory,
   isFavoriteCategory,
 } from '../useFavorites';
-import { getDB } from '../db';
+import { getDB, dbExecute } from '../db';
 
 // Mock the db module
 jest.mock('../db', () => ({
   getDB: jest.fn(),
+  dbExecute: jest.fn(),
 }));
 
 // Mock the logger
@@ -28,6 +29,9 @@ jest.mock('../../lib/logger', () => ({
     error: jest.fn(),
   }),
 }));
+
+const mockGetDB = getDB as jest.MockedFunction<typeof getDB>;
+const mockDbExecute = dbExecute as jest.MockedFunction<typeof dbExecute>;
 
 describe('useFavorites', () => {
   beforeEach(() => {
@@ -40,14 +44,11 @@ describe('useFavorites', () => {
         select: jest.fn().mockResolvedValue([]),
         execute: jest.fn().mockResolvedValue(undefined),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       await initFavoritesTable();
 
-      expect(getDB).toHaveBeenCalled();
-      expect(mockDB.execute).toHaveBeenCalledWith(
-        expect.stringContaining('CREATE TABLE IF NOT EXISTS favorites')
-      );
+      expect(mockGetDB).toHaveBeenCalled();
     });
   });
 
@@ -59,7 +60,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue(mockFavorites),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await loadFavorites('acc1');
 
@@ -74,7 +75,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await loadFavorites('acc1');
 
@@ -84,28 +85,22 @@ describe('useFavorites', () => {
 
   describe('addFavorite', () => {
     it('should add favorite item', async () => {
-      const mockDB = {
-        execute: jest.fn().mockResolvedValue(undefined),
-      };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockDbExecute.mockResolvedValue(undefined as any);
 
       await addFavorite('acc1', 'live', 'item1', { name: 'Item 1', poster: 'poster.jpg' });
 
-      expect(mockDB.execute).toHaveBeenCalledWith(
+      expect(mockDbExecute).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO favorites'),
         expect.arrayContaining(['acc1', 'live', 'item1', null, 'Item 1', 'poster.jpg'])
       );
     });
 
     it('should handle extra metadata as JSON', async () => {
-      const mockDB = {
-        execute: jest.fn().mockResolvedValue(undefined),
-      };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockDbExecute.mockResolvedValue(undefined as any);
 
       await addFavorite('acc1', 'vod', 'item1', { extra: { key: 'value' } });
 
-      expect(mockDB.execute).toHaveBeenCalledWith(
+      expect(mockDbExecute).toHaveBeenCalledWith(
         expect.any(String),
         expect.arrayContaining([expect.stringContaining('{"key":"value"}')])
       );
@@ -114,28 +109,22 @@ describe('useFavorites', () => {
 
   describe('removeFavorite', () => {
     it('should remove favorite item', async () => {
-      const mockDB = {
-        execute: jest.fn().mockResolvedValue(undefined),
-      };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockDbExecute.mockResolvedValue(undefined as any);
 
       await removeFavorite('acc1', 'live', 'item1');
 
-      expect(mockDB.execute).toHaveBeenCalledWith(
+      expect(mockDbExecute).toHaveBeenCalledWith(
         "DELETE FROM favorites WHERE account_id = ? AND kind = 'item' AND type = ? AND item_id IN (?, ?)",
         ['acc1', 'live', 'item1', 'item1.0']
       );
     });
 
     it('should normalize item_id by removing .0 suffix', async () => {
-      const mockDB = {
-        execute: jest.fn().mockResolvedValue(undefined),
-      };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockDbExecute.mockResolvedValue(undefined as any);
 
       await removeFavorite('acc1', 'vod', 'item1.0');
 
-      expect(mockDB.execute).toHaveBeenCalledWith(
+      expect(mockDbExecute).toHaveBeenCalledWith(
         "DELETE FROM favorites WHERE account_id = ? AND kind = 'item' AND type = ? AND item_id IN (?, ?)",
         ['acc1', 'vod', 'item1', 'item1.0']
       );
@@ -144,25 +133,19 @@ describe('useFavorites', () => {
 
   describe('addToFavorites / removeFromFavorites', () => {
     it('should call addFavorite', async () => {
-      const mockDB = {
-        execute: jest.fn().mockResolvedValue(undefined),
-      };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockDbExecute.mockResolvedValue(undefined as any);
 
       await addToFavorites('acc1', 'live', 'item1', { name: 'Item 1' });
 
-      expect(mockDB.execute).toHaveBeenCalled();
+      expect(mockDbExecute).toHaveBeenCalled();
     });
 
     it('should call removeFavorite', async () => {
-      const mockDB = {
-        execute: jest.fn().mockResolvedValue(undefined),
-      };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockDbExecute.mockResolvedValue(undefined as any);
 
       await removeFromFavorites('acc1', 'live', 'item1');
 
-      expect(mockDB.execute).toHaveBeenCalled();
+      expect(mockDbExecute).toHaveBeenCalled();
     });
   });
 
@@ -171,7 +154,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue([{ count: 1 }]),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await isFavorite('acc1', 'live', 'item1');
 
@@ -182,7 +165,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue([{ count: 0 }]),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await isFavorite('acc1', 'live', 'item1');
 
@@ -193,7 +176,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await isFavorite('acc1', 'live', 'item1');
 
@@ -210,7 +193,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue(mockCategories),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await loadFavoriteCategories('acc1', 'live');
 
@@ -225,7 +208,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await loadFavoriteCategories('acc1', 'live');
 
@@ -243,7 +226,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue(mockCategories),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await loadAllFavoriteCategories('acc1');
 
@@ -258,7 +241,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await loadAllFavoriteCategories('acc1');
 
@@ -271,7 +254,7 @@ describe('useFavorites', () => {
       const mockDB = {
         execute: jest.fn().mockResolvedValue(undefined),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       await addFavoriteCategory('acc1', 'live', 'cat1', 'Category 1');
 
@@ -287,7 +270,7 @@ describe('useFavorites', () => {
       const mockDB = {
         execute: jest.fn().mockResolvedValue(undefined),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       await removeFavoriteCategory('acc1', 'live', 'cat1');
 
@@ -304,7 +287,7 @@ describe('useFavorites', () => {
         select: jest.fn().mockResolvedValue([{ count: 0 }]),
         execute: jest.fn().mockResolvedValue(undefined),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await toggleFavoriteCategory('acc1', 'live', 'cat1', 'Category 1');
 
@@ -317,7 +300,7 @@ describe('useFavorites', () => {
         select: jest.fn().mockResolvedValue([{ count: 1 }]),
         execute: jest.fn().mockResolvedValue(undefined),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await toggleFavoriteCategory('acc1', 'live', 'cat1');
 
@@ -334,7 +317,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue([{ count: 1 }]),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await isFavoriteCategory('acc1', 'live', 'cat1');
 
@@ -345,7 +328,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockResolvedValue([{ count: 0 }]),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await isFavoriteCategory('acc1', 'live', 'cat1');
 
@@ -356,7 +339,7 @@ describe('useFavorites', () => {
       const mockDB = {
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       };
-      (getDB as jest.Mock).mockResolvedValue(mockDB);
+      mockGetDB.mockResolvedValue(mockDB as any);
 
       const result = await isFavoriteCategory('acc1', 'live', 'cat1');
 

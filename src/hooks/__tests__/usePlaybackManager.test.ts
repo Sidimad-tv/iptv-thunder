@@ -57,13 +57,17 @@ const mockPlayer = {
   close: jest.fn(),
 };
 
-const mockQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+let mockQueryClient: QueryClient;
+
+function createMockQueryClient(): QueryClient {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
     },
-  },
-});
+  });
+}
 
 const mockSelectedSeries: StalkerVOD = {
   id: 123,
@@ -98,6 +102,7 @@ const mockT = jest.fn((key: string) => {
 describe('usePlaybackManager - handleEpisodeEnded', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockQueryClient = createMockQueryClient();
 
     mockUsePlaybackStore.mockReturnValue(mockPlayer);
     mockGetSetting.mockResolvedValue(true); // Autoplay enabled by default

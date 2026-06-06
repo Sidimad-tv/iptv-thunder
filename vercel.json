@@ -1,0 +1,9 @@
+{
+  "framework": "vite",
+  "buildCommand": "npx tsc --noEmit && npx vite build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
