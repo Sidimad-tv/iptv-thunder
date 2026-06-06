@@ -1,0 +1,263 @@
+import React, { Suspense, lazy } from 'react';
+import { StalkerClient } from '@/lib/stalkerAPI_new';
+import { StalkerGenre, StalkerVOD, StalkerChannel } from '@/types';
+import { Route, isMovieDetails, isSeriesDetails } from '@/hooks/useTypedRouter';
+import { PortalAccount } from '@/features/portals/portals.types';
+
+// Lazy load components
+const TVList = lazy(() => import('@/features/tv/TVList').then(module => ({ default: module.TVList })));
+const MovieList = lazy(() => import('@/features/movies/MovieList').then(module => ({ default: module.MovieList })));
+const MovieDetails = lazy(() => import('@/features/movies/MovieDetails').then(module => ({ default: module.MovieDetails })));
+const SeriesList = lazy(() => import('@/features/series/SeriesList').then(module => ({ default: module.SeriesList })));
+const SeriesDetails = lazy(() => import('@/features/series/SeriesDetails').then(module => ({ default: module.SeriesDetails })));
+const PortalsPage = lazy(() => import('@/features/portals/PortalsPage'));
+const ChannelCategoriesList = lazy(() => import('@/features/tv/ChannelCategoriesList').then(module => ({ default: module.ChannelCategoriesList })));
+const FavoriteCategoriesList = lazy(() => import('@/features/tv/FavoriteCategoriesList').then(module => ({ default: module.FavoriteCategoriesList })));
+const MovieCategoriesList = lazy(() => import('@/features/movies/MovieCategoriesList').then(module => ({ default: module.MovieCategoriesList })));
+const FavoriteChannelsList = lazy(() => import('@/features/tv/FavoriteChannelsList').then(module => ({ default: module.FavoriteChannelsList })));
+const FavoriteMovieCategoriesList = lazy(() => import('@/features/movies/FavoriteMovieCategoriesList').then(module => ({ default: module.FavoriteMovieCategoriesList })));
+const FavoriteMoviesList = lazy(() => import('@/features/movies/FavoriteMoviesList').then(module => ({ default: module.FavoriteMoviesList })));
+const SeriesCategoriesList = lazy(() => import('@/features/series/SeriesCategoriesList').then(module => ({ default: module.SeriesCategoriesList })));
+const FavoriteSeriesCategoriesList = lazy(() => import('@/features/series/FavoriteSeriesCategoriesList').then(module => ({ default: module.FavoriteSeriesCategoriesList })));
+const FavoriteSeriesList = lazy(() => import('@/features/series/FavoriteSeriesList').then(module => ({ default: module.FavoriteSeriesList })));
+const ForYouSection = lazy(() => import('@/features/personalized/ForYouSection').then(module => ({ default: module.ForYouSection })));
+
+interface AppContentProps {
+  route: Route;
+  activePortal: PortalAccount | null;
+  client: StalkerClient | null;
+  search: string;
+  selectedCategory: StalkerGenre | null;
+  handleChannelSelect: (channel: StalkerChannel) => void | Promise<void>;
+  navigateToMovie: (movie: StalkerVOD) => void;
+  navigateToSeries: (series: StalkerVOD) => void;
+  navigateToCategory: (category: StalkerGenre) => void;
+  goBack: () => void;
+  handleMoviePlay: (movie: StalkerVOD, resumePosition?: number) => void;
+  handleEpisodeSelect: (episode: StalkerVOD, resumePosition?: number) => void;
+}
+
+export const AppContent: React.FC<AppContentProps> = ({
+  route,
+  activePortal,
+  client,
+  search,
+  selectedCategory,
+  handleChannelSelect,
+  navigateToMovie,
+  navigateToSeries,
+  navigateToCategory,
+  goBack,
+  handleMoviePlay,
+  handleEpisodeSelect,
+}) => {
+  // Extract typed data from route using type guards
+  const selectedMovie = isMovieDetails(route) ? route.movie : null;
+  const selectedSeries = isSeriesDetails(route) ? route.series : null;
+
+  // Show portals page if no active portal
+  if (!activePortal || route.type === 'portals') {
+    return (
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Portals...</div>}>
+        <PortalsPage />
+      </Suspense>
+    );
+  }
+
+  // Show error if no client
+  if (!client) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">No Connection</h2>
+          <p className="text-muted-foreground">Unable to connect to the portal. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  switch (route.type) {
+    case 'tv':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading TV...</div>}>
+          <TVList
+            client={client}
+            accountId={activePortal.id}
+            search={search}
+            selectedCategory={selectedCategory}
+            onChannelSelect={handleChannelSelect}
+          />
+        </Suspense>
+      );
+    
+    case 'categories':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Categories...</div>}>
+          <ChannelCategoriesList
+            client={client}
+            search={search}
+            onCategorySelect={navigateToCategory}
+          />
+        </Suspense>
+      );
+    
+    case 'favorite-categories':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Favorite Categories...</div>}>
+          <FavoriteCategoriesList
+            client={client}
+            search={search}
+            onCategorySelect={navigateToCategory}
+          />
+        </Suspense>
+      );
+    
+    case 'favorite-channels':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Favorite Channels...</div>}>
+          <FavoriteChannelsList
+            client={client}
+            accountId={activePortal.id}
+            search={search}
+            onChannelSelect={handleChannelSelect}
+          />
+        </Suspense>
+      );
+    
+    case 'movies':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Movies...</div>}>
+          <MovieList
+            client={client}
+            selectedCategory={selectedCategory}
+            onMovieSelect={navigateToMovie}
+            search={search}
+          />
+        </Suspense>
+      );
+    
+    case 'movie-categories':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Movie Categories...</div>}>
+          <MovieCategoriesList
+            client={client}
+            search={search}
+            onCategorySelect={navigateToCategory}
+          />
+        </Suspense>
+      );
+    
+    case 'favorite-movie-categories':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Favorite Movie Categories...</div>}>
+          <FavoriteMovieCategoriesList
+            client={client}
+            search={search}
+            onCategorySelect={navigateToCategory}
+          />
+        </Suspense>
+      );
+    
+    case 'movie-details':
+      return selectedMovie && client ? (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Movie Details...</div>}>
+          <MovieDetails
+            movie={selectedMovie}
+            client={client}
+            onPlay={handleMoviePlay}
+            onBack={goBack}
+          />
+        </Suspense>
+      ) : null;
+    
+    case 'favorite-movies':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Favorite Movies...</div>}>
+          <FavoriteMoviesList
+            accountId={activePortal.id}
+            search={search}
+            onMovieSelect={navigateToMovie}
+          />
+        </Suspense>
+      );
+    
+    case 'series':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Series...</div>}>
+          <SeriesList
+            client={client}
+            onSeriesSelect={navigateToSeries}
+            selectedCategory={selectedCategory}
+            search={search}
+          />
+        </Suspense>
+      );
+    
+    case 'series-details':
+      return selectedSeries && client ? (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Series Details...</div>}>
+          <SeriesDetails
+            series={selectedSeries}
+            client={client}
+            onPlay={handleEpisodeSelect}
+            onBack={goBack}
+          />
+        </Suspense>
+      ) : null;
+    
+    case 'series-categories':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Series Categories...</div>}>
+          <SeriesCategoriesList
+            client={client}
+            search={search}
+            onCategorySelect={navigateToCategory}
+          />
+        </Suspense>
+      );
+    
+    case 'favorite-series-categories':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Favorite Series Categories...</div>}>
+          <FavoriteSeriesCategoriesList
+            client={client}
+            search={search}
+            onCategorySelect={navigateToCategory}
+          />
+        </Suspense>
+      );
+    
+    case 'favorite-series':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading Favorite Series...</div>}>
+          <FavoriteSeriesList
+            accountId={activePortal.id}
+            search={search}
+            onSeriesSelect={navigateToSeries}
+          />
+        </Suspense>
+      );
+
+    case 'for-you':
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading For You...</div>}>
+          <ForYouSection
+            client={client}
+            onChannelSelect={handleChannelSelect}
+            onSeriesSelect={navigateToSeries}
+            onMoviePlay={handleMoviePlay}
+          />
+        </Suspense>
+      );
+
+    default:
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Page Not Found</h2>
+            <p className="text-muted-foreground">The requested page could not be found.</p>
+          </div>
+        </div>
+      );
+  }
+};
