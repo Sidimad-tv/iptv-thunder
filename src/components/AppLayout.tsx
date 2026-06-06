@@ -167,7 +167,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   // Extract complex className logic
   const containerClassName = useMemo(() => {
-    const baseClasses = 'flex flex-col h-full min-h-screen';
+    const baseClasses = 'flex flex-col h-screen';
     if (player.current) {
       return `${baseClasses} bg-transparent`;
     }

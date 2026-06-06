@@ -146,7 +146,7 @@ export const useMoviesAll = (client: StalkerClient, categoryId?: string, search?
         }));
 
         persistVodQueue(vodData, accountId, effectiveCategoryId, saveVod)
-          .catch(err => console.error('[DB] Failed to save VOD:', err));
+          .catch(() => {});
       }
 
       return normalized;

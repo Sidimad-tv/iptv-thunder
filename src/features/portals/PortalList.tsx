@@ -7,7 +7,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { PortalAccount } from './portals.types';
 import { PortalForm } from './PortalForm';
 import { PortalTest } from './PortalTest';
-import { CheckCircle, Circle, Plus, Target, RefreshCw, Edit, Trash2, X, Globe, Monitor } from 'lucide-react';
+import { fetchLatestBlogPortals, BlogPortalEntry } from '@/utils/portalImporter';
+import { CheckCircle, Circle, Plus, Target, RefreshCw, Edit, Trash2, X, Globe, Monitor, Download } from 'lucide-react';
 
 export const PortalList: React.FC = () => {
   const { t, currentLang } = useTranslation();
@@ -16,12 +17,15 @@ export const PortalList: React.FC = () => {
   const [testingPortal, setTestingPortal] = useState<string | null>(null);
   const [activeMenuPortal, setActiveMenuPortal] = useState<string | null>(null);
   const [deletingPortal, setDeletingPortal] = useState<PortalAccount | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importEntries, setImportEntries] = useState<BlogPortalEntry[] | null>(null);
 
   const {
     portals,
     activePortalId,
     deletePortal,
     setActivePortal,
+    addPortal,
   } = usePortalsStore();
 
   const testingPortalData = usePortalsStore(s =>
@@ -156,6 +160,52 @@ export const PortalList: React.FC = () => {
     setEditingPortal(null);
   };
 
+  const handleFetchPortals = async () => {
+    setImporting(true);
+    try {
+      const entries = await fetchLatestBlogPortals();
+      setImportEntries(entries);
+    } catch (e) {
+      setImportEntries([]);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleConfirmImport = () => {
+    if (!importEntries) return;
+    let added = 0;
+    for (const entry of importEntries) {
+      const dup = portals.some(
+        p => p.mac.toLowerCase() === entry.mac.toLowerCase() && p.portalUrl === entry.portalUrl
+      );
+      if (!dup) {
+        addPortal({
+          name: entry.name,
+          login: '',
+          password: '',
+          portalUrl: entry.portalUrl,
+          mac: entry.mac,
+          isActive: false,
+        });
+        added++;
+      }
+    }
+    setImportEntries(null);
+    if (added > 0) focusAddButton();
+  };
+
+  const handleCancelImport = () => {
+    setImportEntries(null);
+    focusAddButton();
+  };
+
+  const uniquePortalsCount = importEntries
+    ? importEntries.filter(e => !portals.some(
+        p => p.mac.toLowerCase() === e.mac.toLowerCase() && p.portalUrl === e.portalUrl
+      )).length
+    : 0;
+
   const getStatusColor = (portal: PortalAccount) => {
     if (portal.id === activePortalId) return 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-400/30 shadow-xl shadow-emerald-500/20';
     return 'dark:bg-slate-800/50 bg-white/50 hover:dark:bg-slate-700/60 hover:bg-gray-200/60 dark:border-slate-700/50 border-gray-300/50 hover:dark:border-slate-600/50 hover:border-gray-400/50';
@@ -179,22 +229,32 @@ export const PortalList: React.FC = () => {
               {t('portalDescription')}
             </p>
           </div>
-          <button
-            ref={addButtonRef}
-            id="add-portal-btn"
-            data-tv-focusable
-            data-tv-id="add-portal-btn"
-            data-tv-index={100}
-            data-tv-group="portals-content"
-            data-tv-initial
-            tabIndex={0}
-            onClick={() => setShowForm(true)}
-            className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 md:gap-3 overflow-hidden text-sm md:text-base"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <Plus className="relative w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
-            <span className="relative">{t('addPortal')}</span>
-          </button>
+          <div className="flex gap-3">
+            <button
+              ref={addButtonRef}
+              id="add-portal-btn"
+              data-tv-focusable
+              data-tv-id="add-portal-btn"
+              data-tv-index={100}
+              data-tv-group="portals-content"
+              data-tv-initial
+              tabIndex={0}
+              onClick={() => setShowForm(true)}
+              className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 md:gap-3 overflow-hidden text-sm md:text-base"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Plus className="relative w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="relative">{t('addPortal')}</span>
+            </button>
+            <button
+              onClick={handleFetchPortals}
+              disabled={importing}
+              className="group relative px-4 md:px-6 py-3 md:py-4 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 md:gap-3 overflow-hidden text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              <Download className={`relative w-4 h-4 md:w-5 md:h-5 ${importing ? 'animate-bounce' : ''}`} />
+              <span className="relative whitespace-nowrap">{importing ? 'Fetching...' : 'Import'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -474,6 +534,85 @@ export const PortalList: React.FC = () => {
               >
                 <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
                 {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Results Modal */}
+      {importEntries && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div
+            data-tv-container="modal"
+            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[95vw] md:max-w-lg border border-slate-700/50 overflow-hidden max-h-[90vh] flex flex-col"
+          >
+            {/* Header */}
+            <div className="p-4 md:p-6 border-b border-slate-700/50 bg-gradient-to-r from-violet-500/10 to-purple-500/10 flex-shrink-0">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-violet-500/20 flex items-center justify-center backdrop-blur-sm border border-violet-400/20 flex-shrink-0">
+                  <Download className="w-5 h-5 md:w-6 md:h-6 text-violet-400" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-lg md:text-xl font-bold text-white">Import Portals</h2>
+                  <p className="text-xs md:text-sm text-slate-400">
+                    Found {importEntries.length} portal entries ({uniquePortalsCount} new)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-2">
+              {importEntries.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-8">No portals found. The blog page may have changed.</p>
+              )}
+              {importEntries.map((entry, i) => {
+                const isDup = portals.some(
+                  p => p.mac.toLowerCase() === entry.mac.toLowerCase() && p.portalUrl === entry.portalUrl
+                );
+                return (
+                  <div
+                    key={`${entry.portalUrl}-${entry.mac}-${i}`}
+                    className={`flex items-center gap-3 p-2 md:p-3 rounded-lg md:rounded-xl text-xs md:text-sm ${
+                      isDup ? 'dark:bg-slate-800/30 bg-gray-100/30 opacity-50' : 'dark:bg-slate-800/50 bg-gray-100/50'
+                    }`}
+                  >
+                    <span className="font-mono text-[10px] md:text-xs dark:text-slate-400 text-slate-500 w-16 md:w-20 flex-shrink-0 truncate">{entry.name}</span>
+                    <span className="font-mono text-[10px] md:text-xs dark:text-slate-300 text-slate-600 flex-1 truncate">{entry.portalUrl}</span>
+                    <span className="font-mono text-[10px] md:text-xs dark:text-slate-300 text-slate-600 w-24 md:w-28 flex-shrink-0">{entry.mac}</span>
+                    {isDup && <span className="text-[10px] md:text-xs text-amber-400 flex-shrink-0">dup</span>}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 p-4 md:p-6 pt-2 border-t border-slate-700/50 flex-shrink-0">
+              <button
+                type="button"
+                data-tv-focusable
+                data-tv-group="import-confirm"
+                data-tv-index={0}
+                tabIndex={0}
+                onClick={handleCancelImport}
+                className="w-full sm:w-auto px-4 md:px-5 py-2 md:py-2.5 border border-slate-600 text-slate-300 rounded-lg md:rounded-xl hover:bg-slate-700/50 hover:text-white transition-all duration-200 hover:scale-105 text-sm md:text-base"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-tv-focusable
+                data-tv-group="import-confirm"
+                data-tv-index={1}
+                data-tv-initial
+                tabIndex={0}
+                onClick={handleConfirmImport}
+                disabled={uniquePortalsCount === 0}
+                className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-lg md:rounded-xl font-semibold hover:from-violet-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/25 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                <Download className="w-4 h-4 md:w-5 md:h-5" />
+                Add {uniquePortalsCount} portals
               </button>
             </div>
           </div>

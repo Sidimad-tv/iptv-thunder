@@ -123,7 +123,7 @@ export const useChannels = (client: StalkerClient, genreId?: string, prefetchEPG
     })), accountId).then(() => {
       // Mark as saved
       localStorage.setItem(savedSignatureKey, signature);
-    }).catch(err => console.error('[DB] Failed to save channels:', err));
+    }).catch(() => {});
   }, [query.data, accountId, genreId]);
   
   // Pre-fetch EPG for channels (only for first 20 visible channels)
@@ -292,7 +292,7 @@ export const useLazyChannels = (client: StalkerClient, genreId?: string) => {
         iconUrl: ch.logo_url || ch.logo || '',
         genreId: ch.tv_genre_id?.toString(),
         orderNum: ch.number || 0,
-      })), accountId).catch(err => console.error('[DB] Failed to upsert channels:', err));
+      })), accountId).catch(() => {});
     }
 
     // Stop loading when API says no more, or when 'All' cap is reached
@@ -503,7 +503,7 @@ export const useLazyChannels = (client: StalkerClient, genreId?: string) => {
     })), accountId).then(() => {
       // Mark as saved
       localStorage.setItem(savedSignatureKey, signature);
-    }).catch(err => console.error('[DB] Failed to save channels:', err));
+    }).catch(() => {});
   }, [allChannels, accountId, genreId]);
 
   return {

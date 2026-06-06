@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 const isTauriEnv = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+const proxyBase = typeof window !== 'undefined' && window.location.protocol === 'https:' ? window.location.origin + '/api/proxy' : null;
 
 const loggedErrors = new Set<string>();
 const LOG_ERROR_LIMIT = 20;
@@ -54,20 +55,30 @@ function cleanupBlobCache() {
 async function browserFetchImage(url: string, signal?: AbortSignal): Promise<string> {
   if (!url) return '';
 
-  const cached = blobCache.get(url);
+  // Proxy HTTP URLs through Vercel to avoid mixed content on HTTPS pages
+  const fetchUrl = proxyBase && url.startsWith('http://') ? proxyBase + '?url=' + encodeURIComponent(url) : url;
+
+  const cached = blobCache.get(fetchUrl);
   if (cached) return cached;
 
+  // Also check if the original URL was cached (before proxying)
+  if (fetchUrl !== url) {
+    const origCached = blobCache.get(url);
+    if (origCached) return origCached;
+  }
+
   try {
-    const resp = await fetch(url, { signal, mode: 'cors', headers: { Accept: 'image/*,*/*' } });
-    if (!resp.ok) return url;
+    const resp = await fetch(fetchUrl, { signal, mode: 'cors', headers: { Accept: 'image/*,*/*' } });
+    if (!resp.ok) return fetchUrl;
     const blob = await resp.blob();
-    if (!blob.type.startsWith('image/')) return url;
+    if (!blob.type.startsWith('image/')) return fetchUrl;
     const blobUrl = URL.createObjectURL(blob);
-    blobCache.set(url, blobUrl);
+    blobCache.set(fetchUrl, blobUrl);
     cleanupBlobCache();
     return blobUrl;
   } catch {
-    return url;
+    // If fetch fails (mixed content block), return the proxied URL for native img loading
+    return fetchUrl;
   }
 }
 
