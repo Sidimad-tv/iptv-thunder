@@ -1,28 +1,48 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Hls from 'hls.js';
-import mpegts from 'mpegts.js';
-import type { PlayerProps } from '../mpv/mpv.types';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
-const BrowserPlayerComponent: React.FC<PlayerProps> = ({
+interface BrowserPlayerProps {
+  url: string;
+  name: string;
+  channelId?: number;
+  client?: any;
+  buffering?: boolean;
+  isVod?: boolean;
+  movieId?: string;
+  resumePosition?: number;
+  genreId?: string;
+  onClose: () => void;
+  onEnded?: () => void;
+  onNextEpisode?: () => void;
+  onChannelChange?: (channel: any) => void;
+}
+
+const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const proxyBase = typeof window !== 'undefined' ? window.location.origin + '/api/proxy' : '';
+
+function proxyUrl(originalUrl: string): string {
+  if (!isHttps || originalUrl.startsWith(proxyBase)) return originalUrl;
+  // Only proxy HTTP URLs from HTTPS pages to avoid mixed content
+  if (originalUrl.startsWith('http://')) {
+    return proxyBase + '?url=' + encodeURIComponent(originalUrl);
+  }
+  return originalUrl;
+}
+
+const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
   url, name, isVod, onClose, onEnded,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  const mpegtsRef = useRef<mpegts.Player | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loadAttempted, setLoadAttempted] = useState(false);
+
+  // Proxy the URL if needed (HTTPS page + HTTP stream)
+  const proxiedUrl = useMemo(() => proxyUrl(url), [url]);
 
   const cleanup = useCallback(() => {
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-    if (mpegtsRef.current) {
-      mpegtsRef.current.destroy();
-      mpegtsRef.current = null;
-    }
     if (videoRef.current) {
       videoRef.current.src = '';
+      videoRef.current.load();
     }
   }, []);
 
@@ -33,53 +53,95 @@ const BrowserPlayerComponent: React.FC<PlayerProps> = ({
     cleanup();
     setError(null);
     setIsPlaying(false);
+    setLoadAttempted(false);
 
-    const loadStream = () => {
-      if (url.endsWith('.m3u8') || url.includes('.m3u8')) {
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hlsRef.current = hls;
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
-          });
-          hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) {
-              setError('HLS playback error');
-            }
-          });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = url;
-          video.play().catch(() => {});
+    const isM3u8 = url.includes('.m3u8');
+    const isTs = url.includes('.ts') || url.includes('extension=ts') || url.includes('extension=mpegts');
+
+    const loadWithNativeVideo = (src: string) => {
+      video.src = src;
+      video.load();
+      video.play().then(() => {
+        setIsPlaying(true);
+        setLoadAttempted(true);
+      }).catch((e) => {
+        setLoadAttempted(true);
+        if (e.name === 'NotAllowedError') {
+          setError('Click to play (autoplay blocked)');
         } else {
-          setError('HLS not supported in this browser');
+          setError('Cannot play this stream. Try using the Tauri desktop app for better playback support.');
         }
-      } else if (url.endsWith('.ts') || url.includes('.ts')) {
-        if (mpegts.isSupported()) {
-          const player = mpegts.createPlayer({
-            type: 'mpegts',
-            url: url,
-            isLive: !isVod,
-          });
-          mpegtsRef.current = player;
-          player.attachMediaElement(video);
-          player.load();
-          player.play();
-        } else {
-          video.src = url;
-          video.play().catch(() => setError('Cannot play this stream'));
+      });
+    };
+
+    const tryMpegts = async () => {
+      try {
+        const mpegts = await import('mpegts.js');
+        if (!mpegts.isSupported || !mpegts.isSupported()) {
+          loadWithNativeVideo(proxiedUrl);
+          return;
         }
-      } else {
-        video.src = url;
-        video.play().catch(() => setError('Cannot play this stream'));
+        const player = mpegts.createPlayer({
+          type: 'mpegts',
+          url: proxiedUrl,
+          isLive: !isVod,
+        }, {
+          enableWorker: false,
+          liveBufferLatencyChasing: true,
+          lazyLoad: true,
+          lazyLoadMaxDuration: 30,
+        });
+        player.attachMediaElement(video);
+        player.load();
+        player.on('error', (err: any) => {
+          player.unload();
+          player.detachMediaElement();
+          loadWithNativeVideo(proxiedUrl);
+        });
+        player.on('playing', () => {
+          setIsPlaying(true);
+          setLoadAttempted(true);
+        });
+        player.play();
+      } catch {
+        loadWithNativeVideo(proxiedUrl);
       }
     };
 
-    loadStream();
+    const tryHls = async () => {
+      try {
+        const Hls = (await import('hls.js')).default;
+        if (!Hls.isSupported || !Hls.isSupported()) {
+          loadWithNativeVideo(proxiedUrl);
+          return;
+        }
+        const hls = new Hls();
+        hls.loadSource(proxiedUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data.fatal) {
+            hls.destroy();
+            loadWithNativeVideo(proxiedUrl);
+          }
+        });
+      } catch {
+        loadWithNativeVideo(proxiedUrl);
+      }
+    };
+
+    if (isM3u8) {
+      tryHls();
+    } else if (isTs) {
+      tryMpegts();
+    } else {
+      loadWithNativeVideo(proxiedUrl);
+    }
 
     return cleanup;
-  }, [url, cleanup, isVod]);
+  }, [url, proxiedUrl, cleanup, isVod]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
@@ -102,16 +164,28 @@ const BrowserPlayerComponent: React.FC<PlayerProps> = ({
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={onEnded}
+          onClick={() => { if (videoRef.current?.paused) videoRef.current.play().catch(() => {}); }}
         />
         {error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-            <div className="text-center p-6">
+            <div className="text-center p-6 max-w-md">
               <p className="text-red-400 text-lg mb-2">Playback Error</p>
-              <p className="text-gray-400 text-sm">{error}</p>
+              <p className="text-gray-400 text-sm mb-4">{error}</p>
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg"
+              >
+                Close
+              </button>
             </div>
           </div>
         )}
-        {!isPlaying && !error && (
+        {!isPlaying && !error && loadAttempted && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        )}
+        {!isPlaying && !error && !loadAttempted && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full" />
           </div>

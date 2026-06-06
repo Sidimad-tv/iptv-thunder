@@ -1,5 +1,13 @@
 const USER_AGENT = 'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG250 Safari/533.3';
 
+const TEXT_CONTENT_TYPES = ['application/json', 'text/', 'application/xml', 'text/xml'];
+
+function isTextContentType(contentType) {
+  if (!contentType) return true;
+  const ct = contentType.toLowerCase();
+  return TEXT_CONTENT_TYPES.some(t => ct.startsWith(t) || ct.includes(t));
+}
+
 export default async function handler(req, res) {
   const { url, _auth, _cookie, ...queryParams } = req.query;
 
@@ -21,18 +29,13 @@ export default async function handler(req, res) {
   const headers = {
     'User-Agent': USER_AGENT,
     'X-User-Agent': USER_AGENT,
-    'Accept': 'application/json, text/plain, */*',
+    'Accept': '*/*',
     'Accept-Language': 'en-US,en;q=0.9',
     'Connection': 'keep-alive',
   };
 
-  if (_auth) {
-    headers['Authorization'] = _auth;
-  }
-
-  if (_cookie) {
-    headers['Cookie'] = _cookie;
-  }
+  if (_auth) headers['Authorization'] = _auth;
+  if (_cookie) headers['Cookie'] = _cookie;
 
   try {
     const response = await fetch(targetUrl, {
@@ -40,19 +43,28 @@ export default async function handler(req, res) {
       headers,
     });
 
-    const text = await response.text();
     const contentType = response.headers.get('content-type') || '';
 
-    // Try to parse as JSON regardless of content-type.
-    // Stalker portals often return JavaScript/XML wrappers around JSON data.
+    // For binary content (streams, video), pipe through as-is
+    if (!isTextContentType(contentType)) {
+      const buffer = await response.arrayBuffer();
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Length', buffer.byteLength);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      return res.status(response.status).send(Buffer.from(buffer));
+    }
+
+    // For text content (API responses), try to parse as JSON
+    const text = await response.text();
+
     let jsonData;
     let parseFailed = false;
     try {
       jsonData = JSON.parse(text);
     } catch {
-      // Try to extract JSON from JavaScript wrapper (JsHttpRequest format):
-      // "//JSHttpRequest=1-xml//\n{"js": {...}}"
-      // or "var data = {...};"
       const jsonMatch = text.match(/(\{[\s\S]*\})/);
       if (jsonMatch) {
         try {
@@ -66,10 +78,13 @@ export default async function handler(req, res) {
     }
 
     if (!parseFailed && jsonData) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
       return res.status(response.status).json(jsonData);
     }
 
-    return res.status(response.status).setHeader('content-type', contentType).send(text);
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(response.status).send(text);
   } catch (error) {
     console.error('Proxy error:', error.message);
     return res.status(502).json({ error: 'Proxy request failed', message: error.message });
