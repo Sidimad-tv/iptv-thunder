@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Player Control Button Style -->
+    <style name="PlayerControlButton" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="iconTint">#FFFFFF</item>
+        <item name="iconGravity">textStart</item>
+        <item name="cornerRadius">28dp</item>
+        <item name="rippleColor">#40FFFFFF</item>
+    </style>
+
+    <!-- Primary Player Control Button Style (Play/Pause) -->
+    <style name="PlayerControlButton.Primary" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="iconTint">#FFFFFF</item>
+        <item name="iconGravity">textStart</item>
+        <item name="cornerRadius">28dp</item>
+        <item name="rippleColor">#40FFFFFF</item>
+    </style>
+</resources>
