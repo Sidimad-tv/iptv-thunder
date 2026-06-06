@@ -36,13 +36,35 @@ export default async function handler(req, res) {
       headers,
     });
 
+    const text = await response.text();
     const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await response.json();
-      return res.status(response.status).json(data);
+
+    // Try to parse as JSON regardless of content-type.
+    // Stalker portals often return JavaScript/XML wrappers around JSON data.
+    let jsonData;
+    let parseFailed = false;
+    try {
+      jsonData = JSON.parse(text);
+    } catch {
+      // Try to extract JSON from JavaScript wrapper (JsHttpRequest format):
+      // "//JSHttpRequest=1-xml//\n{"js": {...}}"
+      // or "var data = {...};"
+      const jsonMatch = text.match(/(\{[\s\S]*\})/);
+      if (jsonMatch) {
+        try {
+          jsonData = JSON.parse(jsonMatch[1]);
+        } catch {
+          parseFailed = true;
+        }
+      } else {
+        parseFailed = true;
+      }
     }
 
-    const text = await response.text();
+    if (!parseFailed && jsonData) {
+      return res.status(response.status).json(jsonData);
+    }
+
     return res.status(response.status).setHeader('content-type', contentType).send(text);
   } catch (error) {
     console.error('Proxy error:', error.message);
