@@ -86,25 +86,23 @@ export async function getImageUrl(url: string, fallbackUrl: string = '', signal?
     }
 
     // Tauri mode: dynamic import full cache system
-    const { readFile, writeFile, mkdir, remove, readDir, rename, stat } = await import('@tauri-apps/plugin-fs');
+    const { readFile, writeFile, mkdir, remove, rename, stat } = await import('@tauri-apps/plugin-fs');
     const { appDataDir, join } = await import('@tauri-apps/api/path');
     const { fetch } = await import('@tauri-apps/plugin-http');
 
-    // Inline Tauri cache logic (simplified)
     const appDir = await appDataDir();
     const cacheDir = await join(appDir, 'image_cache');
     try { await mkdir(cacheDir, { recursive: true }); } catch { }
     const hashData = new TextEncoder().encode(urlStr);
     const hashBuffer = await crypto.subtle.digest('SHA-1', hashData);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     const filePath = await join(cacheDir, hash + '.img');
 
     try {
       await stat(filePath);
-      const data = await readFile(filePath);
+      const cachedData = await readFile(filePath);
       let binary = '';
-      for (let i = 0; i < data.byteLength; i++) binary += String.fromCodePoint(data[i]);
+      for (let i = 0; i < cachedData.byteLength; i++) binary += String.fromCodePoint(cachedData[i]);
       return `data:image/jpeg;base64,${btoa(binary)}`;
     } catch {
       if (signal?.aborted) throw new Error('Aborted');
@@ -115,12 +113,12 @@ export async function getImageUrl(url: string, fallbackUrl: string = '', signal?
       });
       if (!tauriResp.ok) throw new Error(`HTTP ${tauriResp.status}`);
       const ab = await tauriResp.arrayBuffer();
-      const data = new Uint8Array(ab);
+      const rawData = new Uint8Array(ab);
       const tempPath = filePath + '.tmp';
-      await writeFile(tempPath, data);
+      await writeFile(tempPath, rawData);
       try { await rename(tempPath, filePath); } catch { try { await remove(filePath); await rename(tempPath, filePath); } catch { } }
       let binary = '';
-      for (let i = 0; i < data.byteLength; i++) binary += String.fromCodePoint(data[i]);
+      for (let i = 0; i < rawData.byteLength; i++) binary += String.fromCodePoint(rawData[i]);
       return `data:image/jpeg;base64,${btoa(binary)}`;
     }
   } catch (e) {
@@ -129,7 +127,7 @@ export async function getImageUrl(url: string, fallbackUrl: string = '', signal?
   }
 }
 
-export async function preloadImage(url: string): Promise<boolean> { return false; }
+export async function preloadImage(_url: string): Promise<boolean> { return false; }
 export async function clearImageCache(): Promise<void> {
   for (const blobUrl of blobCache.values()) { if (blobUrl?.startsWith('blob:')) URL.revokeObjectURL(blobUrl); }
   blobCache.clear();
@@ -138,10 +136,10 @@ export async function getCacheSize(): Promise<number> { return 0; }
 export async function getCacheStats() {
   return { size: 0, sizeFormatted: '0 B', fileCount: 0, maxSize: 200 * 1024 * 1024, maxSizeFormatted: '200 MB', usage: 0 };
 }
-export async function cacheImage(url: string, data: Uint8Array, contentType?: string | null): Promise<string> { return url; }
-export async function getCachedImage(url: string): Promise<string | null> { return null; }
-export async function getCachedImageData(url: string): Promise<Uint8Array | null> { return null; }
-export async function fetchAndCacheImage(url: string, signal?: AbortSignal): Promise<Uint8Array> { throw new Error('Not in Tauri'); }
+export async function cacheImage(_url: string, _data: Uint8Array, _contentType?: string | null): Promise<string> { return _url; }
+export async function getCachedImage(_url: string): Promise<string | null> { return null; }
+export async function getCachedImageData(_url: string): Promise<Uint8Array | null> { return null; }
+export async function fetchAndCacheImage(_url: string, _signal?: AbortSignal): Promise<Uint8Array> { throw new Error('Not in Tauri'); }
 export async function rebuildLruFromFs(): Promise<void> {}
 
 export function useImageCache() {

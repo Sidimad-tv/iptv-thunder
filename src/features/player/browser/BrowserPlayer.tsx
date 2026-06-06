@@ -21,7 +21,6 @@ const proxyBase = typeof window !== 'undefined' ? window.location.origin + '/api
 
 function proxyUrl(originalUrl: string): string {
   if (!isHttps || originalUrl.startsWith(proxyBase)) return originalUrl;
-  // Only proxy HTTP URLs from HTTPS pages to avoid mixed content
   if (originalUrl.startsWith('http://')) {
     return proxyBase + '?url=' + encodeURIComponent(originalUrl);
   }
@@ -36,7 +35,6 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadAttempted, setLoadAttempted] = useState(false);
 
-  // Proxy the URL if needed (HTTPS page + HTTP stream)
   const proxiedUrl = useMemo(() => proxyUrl(url), [url]);
 
   const cleanup = useCallback(() => {
@@ -64,7 +62,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
       video.play().then(() => {
         setIsPlaying(true);
         setLoadAttempted(true);
-      }).catch((e) => {
+      }).catch((e: DOMException) => {
         setLoadAttempted(true);
         if (e.name === 'NotAllowedError') {
           setError('Click to play (autoplay blocked)');
@@ -76,7 +74,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
 
     const tryMpegts = async () => {
       try {
-        const mpegts = await import('mpegts.js');
+        const mpegts = (await import('mpegts.js')) as any;
         if (!mpegts.isSupported || !mpegts.isSupported()) {
           loadWithNativeVideo(proxiedUrl);
           return;
@@ -93,7 +91,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
         });
         player.attachMediaElement(video);
         player.load();
-        player.on('error', (err: any) => {
+        player.on('error', () => {
           player.unload();
           player.detachMediaElement();
           loadWithNativeVideo(proxiedUrl);
@@ -121,7 +119,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {});
         });
-        hls.on(Hls.Events.ERROR, (_, data) => {
+        hls.on(Hls.Events.ERROR, (_: any, data: any) => {
           if (data.fatal) {
             hls.destroy();
             loadWithNativeVideo(proxiedUrl);
