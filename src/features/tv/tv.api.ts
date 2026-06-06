@@ -11,6 +11,7 @@ export async function getGenres(client: StalkerClient): Promise<StalkerGenre[]> 
   const response = await (client as any)._makeRequest({
     type: 'itv',
     action: 'get_genres',
+    mac: client['account']?.mac,
     JsHttpRequest: '1-xml',
   });
 
