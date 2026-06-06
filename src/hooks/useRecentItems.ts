@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { getDB } from './db';
 import { createLogger } from '../lib/logger';
+import { isBrowser, getCachedRecentItems, setCachedRecentItems } from '@/lib/browserDb';
 
 export type RecentItemType = 'live' | 'vod' | 'series';
 
@@ -97,6 +98,11 @@ export async function initRecentViewedTable(): Promise<void> {
 }
 
 export async function loadRecentViewed(accountId: string, type?: RecentItemType, limit: number = 20): Promise<RecentItem[]> {
+  if (isBrowser()) {
+    const cached = getCachedRecentItems(accountId, type);
+    if (cached) return (cached as RecentItem[]).slice(0, limit);
+    return [];
+  }
   try {
     const db = await getDB();
     const params: any[] = [accountId];
@@ -130,6 +136,29 @@ export async function addRecentViewed(
   itemId: string,
   metadata?: { name?: string; poster?: string; cmd?: string; parent_id?: string; season?: number; episode?: number; extra?: any; genre_id?: string }
 ): Promise<void> {
+  if (isBrowser()) {
+    const items = getCachedRecentItems(accountId, type) || [];
+    // Remove duplicate if exists
+    const filtered = items.filter((r: any) => !(r.type === type && r.item_id === itemId));
+    filtered.unshift({
+      id: Date.now(),
+      account_id: accountId,
+      type,
+      item_id: itemId,
+      name: metadata?.name || 'Unknown',
+      poster: metadata?.poster,
+      cmd: metadata?.cmd,
+      parent_id: metadata?.parent_id,
+      season: metadata?.season,
+      episode: metadata?.episode,
+      extra: metadata?.extra ? JSON.stringify(metadata.extra) : null,
+      genre_id: metadata?.genre_id,
+      viewed_at: Date.now(),
+    } as RecentItem);
+    // Keep only last 100
+    setCachedRecentItems(accountId, filtered.slice(0, 100), type);
+    return;
+  }
   try {
     const db = await getDB();
     const now = Date.now();
@@ -171,6 +200,13 @@ export async function addRecentViewed(
 }
 
 export async function clearRecentViewed(accountId: string): Promise<void> {
+  if (isBrowser()) {
+    setCachedRecentItems(accountId, []);
+    setCachedRecentItems(accountId, [], 'live');
+    setCachedRecentItems(accountId, [], 'vod');
+    setCachedRecentItems(accountId, [], 'series');
+    return;
+  }
   try {
     const db = await getDB();
     await db.execute(`DELETE FROM recently_viewed WHERE account_id = ?`, [accountId]);
@@ -181,6 +217,11 @@ export async function clearRecentViewed(accountId: string): Promise<void> {
 }
 
 export async function removeRecentViewed(accountId: string, type: RecentItemType, itemId: string): Promise<void> {
+  if (isBrowser()) {
+    const items = getCachedRecentItems(accountId, type) || [];
+    setCachedRecentItems(accountId, items.filter((r: any) => !(r.item_id === itemId)), type);
+    return;
+  }
   try {
     const db = await getDB();
     await db.execute(
@@ -194,14 +235,14 @@ export async function removeRecentViewed(accountId: string, type: RecentItemType
 }
 
 export function useRecentViewed(accountId: string, type?: RecentItemType, limit: number = 20) {
-  const tableReady = useTableReady();
+  const modeReady = isBrowser() || useTableReady();
 
   const queryKey = type ? ['recent-viewed', accountId, type] : ['recent-viewed', accountId];
 
   const { data: recentItems = [], isLoading } = useQuery({
     queryKey,
     queryFn: () => loadRecentViewed(accountId, type, limit),
-    enabled: !!accountId && tableReady,
+    enabled: !!accountId && modeReady,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

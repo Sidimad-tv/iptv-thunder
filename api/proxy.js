@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const headers = {
     'User-Agent': USER_AGENT,
     'X-User-Agent': USER_AGENT,
-    'Accept': '*/*',
+    'Accept': 'application/json, text/plain, */*',
     'Accept-Language': 'en-US,en;q=0.9',
     'Connection': 'keep-alive',
   };

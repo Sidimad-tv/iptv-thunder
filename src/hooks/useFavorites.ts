@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { getDB, dbExecute } from './db';
 import { createLogger } from '../lib/logger';
+import { isBrowser, getCachedFavorites, setCachedFavorites, getCachedFavoriteCategories, setCachedFavoriteCategories } from '@/lib/browserDb';
 
 type FavoriteType = 'live' | 'vod' | 'series';
 
@@ -35,6 +36,11 @@ function useTableReady() {
   const [ready, setReady] = useState(dbReady);
   useEffect(() => {
     if (dbReady) return;
+    if (isBrowser()) {
+      dbReady = true;
+      setReady(true);
+      return;
+    }
     dbReadyPromise ??= getDB().then(() => { dbReady = true; }).catch(err => logger.error('DB init error:', err));
     dbReadyPromise.then(() => setReady(true)).catch(err => logger.error('Error waiting for DB:', err));
   }, []);
@@ -50,13 +56,19 @@ export async function initFavoritesTable(): Promise<void> {
 
 // Load favorites (items only, not categories)
 export async function loadFavorites(accountId: string): Promise<FavoriteItem[]> {
+  if (isBrowser()) {
+    const cached = getCachedFavorites(accountId);
+    if (cached) return cached as FavoriteItem[];
+  }
   try {
     const db = await getDB();
     const result = await db.select<FavoriteItem[]>(
       "SELECT * FROM favorites WHERE account_id = ? AND kind = 'item' ORDER BY created_at DESC",
       [accountId]
     );
-    return result || [];
+    const items = result || [];
+    if (isBrowser()) setCachedFavorites(accountId, items);
+    return items;
   } catch (error) {
     logger.error('Error loading favorites:', error);
     return [];
@@ -70,6 +82,29 @@ export async function addFavorite(
   itemId: string,
   metadata?: { name?: string; poster?: string; cmd?: string; parent_id?: string; season?: number; episode?: number; extra?: any }
 ): Promise<void> {
+  if (isBrowser()) {
+    const items = getCachedFavorites(accountId) || [];
+    const exists = items.some((f: any) => f.type === type && String(f.item_id).replace(/\.0$/, '') === String(itemId).replace(/\.0$/, ''));
+    if (!exists) {
+      items.push({
+        id: Date.now(),
+        account_id: accountId,
+        kind: 'item',
+        type,
+        item_id: itemId,
+        parent_id: metadata?.parent_id,
+        name: metadata?.name || 'Unknown',
+        poster: metadata?.poster,
+        cmd: metadata?.cmd,
+        season: metadata?.season,
+        episode: metadata?.episode,
+        extra: metadata?.extra ? JSON.stringify(metadata.extra) : null,
+        created_at: Date.now(),
+      } as FavoriteItem);
+      setCachedFavorites(accountId, items);
+    }
+    return;
+  }
   try {
     const now = Date.now();
     const extraJson = metadata?.extra ? JSON.stringify(metadata.extra) : null;
@@ -99,6 +134,15 @@ export async function removeFavorite(
   type: FavoriteType,
   itemId: string
 ): Promise<void> {
+  if (isBrowser()) {
+    const items = getCachedFavorites(accountId) || [];
+    const normalized = itemId.replace(/\.0$/, '');
+    const filtered = items.filter((f: any) =>
+      !(f.type === type && String(f.item_id).replace(/\.0$/, '') === normalized)
+    );
+    setCachedFavorites(accountId, filtered);
+    return;
+  }
   try {
     // Normalize: remove .0 suffix for comparison since item_id may be stored with or without it
     const normalizedId = itemId.replace(/\.0$/, '');
@@ -138,6 +182,13 @@ export async function isFavorite(
   type: FavoriteType,
   itemId: string
 ): Promise<boolean> {
+  if (isBrowser()) {
+    const items = getCachedFavorites(accountId) || [];
+    const normalized = String(itemId).replace(/\.0$/, '');
+    return items.some((f: any) =>
+      f.type === type && String(f.item_id).replace(/\.0$/, '') === normalized
+    );
+  }
   try {
     const db = await getDB();
     const result = await db.select<{ count: number }[]>(
@@ -160,13 +211,19 @@ export async function loadFavoriteCategories(
   accountId: string,
   type: FavoriteType
 ): Promise<string[]> {
+  if (isBrowser()) {
+    const cached = getCachedFavoriteCategories(accountId, type);
+    if (cached) return cached;
+  }
   try {
     const db = await getDB();
     const result = await db.select<FavoriteItem[]>(
       "SELECT item_id FROM favorites WHERE account_id = ? AND kind = 'category' AND type = ?",
       [accountId, type]
     );
-    return result.map(r => r.item_id);
+    const ids = result.map(r => r.item_id);
+    if (isBrowser()) setCachedFavoriteCategories(accountId, type, ids);
+    return ids;
   } catch (error) {
     logger.error('Error loading favorite categories:', error);
     return [];
@@ -175,6 +232,13 @@ export async function loadFavoriteCategories(
 
 // Load all favorite categories for account (all types)
 export async function loadAllFavoriteCategories(accountId: string): Promise<Record<string, string[]>> {
+  if (isBrowser()) {
+    const result: Record<string, string[]> = { live: [], vod: [], series: [] };
+    for (const t of ['live', 'vod', 'series'] as FavoriteType[]) {
+      result[t] = getCachedFavoriteCategories(accountId, t) || [];
+    }
+    return result;
+  }
   try {
     const db = await getDB();
     const result = await db.select<FavoriteItem[]>(
@@ -199,6 +263,13 @@ export async function addFavoriteCategory(
   categoryId: string,
   name?: string
 ): Promise<void> {
+  if (isBrowser()) {
+    const ids = getCachedFavoriteCategories(accountId, type) || [];
+    if (!ids.includes(categoryId)) {
+      setCachedFavoriteCategories(accountId, type, [...ids, categoryId]);
+    }
+    return;
+  }
   try {
     const db = await getDB();
     const now = Date.now();
@@ -221,6 +292,11 @@ export async function removeFavoriteCategory(
   type: FavoriteType,
   categoryId: string
 ): Promise<void> {
+  if (isBrowser()) {
+    const ids = getCachedFavoriteCategories(accountId, type) || [];
+    setCachedFavoriteCategories(accountId, type, ids.filter(id => id !== categoryId));
+    return;
+  }
   try {
     const db = await getDB();
     await db.execute(
@@ -256,6 +332,10 @@ export async function isFavoriteCategory(
   type: FavoriteType,
   categoryId: string
 ): Promise<boolean> {
+  if (isBrowser()) {
+    const ids = getCachedFavoriteCategories(accountId, type) || [];
+    return ids.includes(categoryId);
+  }
   try {
     const db = await getDB();
     const result = await db.select<{ count: number }[]>(

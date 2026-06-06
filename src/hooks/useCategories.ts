@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { getDB } from './db';
 import { StalkerGenre } from '@/types';
+import { isBrowser, getCachedCategories, setCachedCategories, clearCachedCategories } from '@/lib/browserDb';
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
 const CACHE_TTL = ONE_DAY;
@@ -51,6 +52,12 @@ export async function loadCategories(
   portalId: string,
   maxAge: number = CACHE_TTL
 ): Promise<StalkerGenre[]> {
+  // Browser fallback: check in-memory cache first
+  if (isBrowser()) {
+    const cached = getCachedCategories(type, portalId);
+    if (cached) return cached as StalkerGenre[];
+  }
+
   try {
     const db = await getDB();
     const minUpdatedAt = Date.now() - maxAge;
@@ -70,12 +77,16 @@ export async function loadCategories(
     const isFresh = maxAge > 0 && result[0].updated_at > minUpdatedAt;
     if (!isFresh) return [];
     
-    return result.map(c => ({
+    const categories = result.map(c => ({
       id: c.id.toString(),
       title: c.name,
       alias: c.alias || c.name.toLowerCase(),
       parent_id: c.parent_id,
     })) || [];
+
+    // Also cache in browser memory
+    if (isBrowser()) setCachedCategories(type, portalId, categories, maxAge);
+    return categories;
   } catch (error) {
     console.error('[Categories] Error loading categories:', error);
     return [];
@@ -90,6 +101,12 @@ export async function saveCategories(
   portalId: string,
   categories: StalkerGenre[]
 ): Promise<void> {
+  // Browser fallback: cache in memory
+  if (isBrowser()) {
+    setCachedCategories(type, portalId, categories, CACHE_TTL);
+    return;
+  }
+
   try {
     const db = await getDB();
     const now = Date.now();
@@ -157,6 +174,10 @@ export async function saveCategories(
 
 // Clear all categories cache (for all types and portals)
 export async function clearAllCategoriesCache(): Promise<void> {
+  if (isBrowser()) {
+    clearCachedCategories();
+    return;
+  }
   try {
     const db = await getDB();
     await db.execute(`DELETE FROM categories`);
@@ -200,6 +221,10 @@ export function useCategories(
         console.log('[Categories] Cache miss, fetching from API...');
         const fresh = await fetchFn();
         await saveCategories(type, portalId, fresh);
+        // Cache in browser memory if SQLite unavailable
+        if (isBrowser() && fresh.length > 0) {
+          setCachedCategories(type, portalId, fresh, CACHE_TTL);
+        }
         // Add "All" category if not present
         const hasAllCategory = fresh.some(cat => cat.id === '*');
         if (!hasAllCategory) {
