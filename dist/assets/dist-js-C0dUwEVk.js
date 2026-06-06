@@ -1,0 +1,1 @@
+import{at as e}from"./useTranslation-jUwuhgAR.js";import"./core-w4ZWUd33.js";var t=e({platform:()=>n});function n(){return window.__TAURI_OS_PLUGIN_INTERNALS__.platform}export{n,t};
