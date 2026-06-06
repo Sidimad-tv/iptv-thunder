@@ -36,20 +36,37 @@ export default defineConfig({
             const headers: Record<string, string> = {
               'User-Agent': USER_AGENT,
               'X-User-Agent': USER_AGENT,
-              'Accept': '*/*',
+              'Accept': 'application/json, text/plain, */*',
               'Accept-Language': 'en-US,en;q=0.9',
               'Connection': 'keep-alive',
             };
             if (query._auth) headers['Authorization'] = query._auth;
+            if (query._cookie) headers['Cookie'] = query._cookie;
             const resp = await fetch(targetUrl, { method: 'GET', headers });
+            const text = await resp.text();
             const ct = resp.headers.get('content-type') || '';
-            res.statusCode = resp.status;
-            if (ct.includes('application/json')) {
+            let jsonData;
+            let parseFailed = false;
+            try {
+              jsonData = JSON.parse(text);
+            } catch {
+              const jsonMatch = text.match(/(\{[\s\S]*\})/);
+              if (jsonMatch) {
+                try {
+                  jsonData = JSON.parse(jsonMatch[1]);
+                } catch {
+                  parseFailed = true;
+                }
+              } else {
+                parseFailed = true;
+              }
+            }
+            if (!parseFailed && jsonData) {
               res.setHeader('content-type', 'application/json');
-              res.end(JSON.stringify(await resp.json()));
+              res.end(JSON.stringify(jsonData));
             } else {
               res.setHeader('content-type', ct);
-              res.end(await resp.text());
+              res.end(text);
             }
           } catch (e: any) {
             res.statusCode = 502;

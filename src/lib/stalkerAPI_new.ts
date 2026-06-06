@@ -106,7 +106,7 @@ export class StalkerClient {
         this.axios = axios.create({
           baseURL: proxyBase + '/',
           timeout,
-          headers: { 'Accept': 'application/json' },
+          headers: { 'Accept': 'application/json', 'Cookie': cookieHeader },
           paramsSerializer: { serialize: (p) => new URLSearchParams(p).toString() },
         });
         this.axios.interceptors.request.use((config) => {
@@ -115,10 +115,10 @@ export class StalkerClient {
           let fullUrl = targetBase + '/' + targetPath;
 
           const auth = (config.headers as any)?.Authorization || '';
+          const cookie = (config.headers as any)?.Cookie || '';
           const extraParams: Record<string, string> = {};
-          if (auth) {
-            extraParams._auth = String(auth);
-          }
+          if (auth) extraParams._auth = String(auth);
+          if (cookie) extraParams._cookie = String(cookie);
 
           if (config.params && Object.keys(config.params).length > 0) {
             const qs = new URLSearchParams();

@@ -1,7 +1,7 @@
 const USER_AGENT = 'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG250 Safari/533.3';
 
 export default async function handler(req, res) {
-  const { url, _auth, ...queryParams } = req.query;
+  const { url, _auth, _cookie, ...queryParams } = req.query;
 
   if (!url) {
     return res.status(400).json({ error: 'Missing url parameter' });
@@ -28,6 +28,10 @@ export default async function handler(req, res) {
 
   if (_auth) {
     headers['Authorization'] = _auth;
+  }
+
+  if (_cookie) {
+    headers['Cookie'] = _cookie;
   }
 
   try {
