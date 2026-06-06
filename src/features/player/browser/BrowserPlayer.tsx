@@ -27,6 +27,9 @@ function proxyUrl(originalUrl: string): string {
   return originalUrl;
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 3000;
+
 const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
   url, name, isVod, onClose, onEnded,
 }) => {
@@ -34,6 +37,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadAttempted, setLoadAttempted] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const proxiedUrl = useMemo(() => proxyUrl(url), [url]);
 
@@ -44,77 +48,63 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !url) return;
-
-    cleanup();
+  const playStream = useCallback(async (streamUrl: string, attempt: number = 0) => {
     setError(null);
     setIsPlaying(false);
-    setLoadAttempted(false);
+    setLoadAttempted(true);
 
-    const isM3u8 = url.includes('.m3u8');
-    const isTs = url.includes('.ts') || url.includes('extension=ts') || url.includes('extension=mpegts');
+    const video = videoRef.current;
+    if (!video) return;
+
+    const isM3u8 = streamUrl.includes('.m3u8');
+    const isTs = streamUrl.includes('.ts') || streamUrl.includes('extension=ts') || streamUrl.includes('extension=mpegts');
+
+    const handleError = (e: any, message: string) => {
+      console.error(`[Player] ${message} (Attempt ${attempt + 1}/${MAX_RETRIES}):`, e);
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          playStream(streamUrl, attempt + 1);
+        }, RETRY_DELAY_MS * (attempt + 1));
+      } else {
+        setError(message + '. Max retries reached. Try another stream or app.');
+        setIsPlaying(false);
+      }
+    };
 
     const loadWithNativeVideo = (src: string) => {
       video.src = src;
       video.load();
       video.play().then(() => {
         setIsPlaying(true);
-        setLoadAttempted(true);
       }).catch((e: DOMException) => {
-        setLoadAttempted(true);
         if (e.name === 'NotAllowedError') {
-          setError('Click to play (autoplay blocked)');
+          handleError(e, 'Click to play (autoplay blocked)');
+        } else if (e.name === 'MediaError') {
+          handleError(e, 'Unsupported video/audio codec or format.');
         } else {
-          setError('Cannot play this stream. Try using the Tauri desktop app for better playback support.');
+          handleError(e, 'Cannot play stream with native video.');
         }
       });
     };
 
-    const tryMpegts = async () => {
-      try {
-        const mpegts = (await import('mpegts.js')) as any;
-        if (!mpegts.isSupported || !mpegts.isSupported()) {
-          loadWithNativeVideo(proxiedUrl);
-          return;
-        }
-        const player = mpegts.createPlayer({
-          type: 'mpegts',
-          url: proxiedUrl,
-          isLive: !isVod,
-        }, {
-          enableWorker: false,
-          liveBufferLatencyChasing: true,
-          lazyLoad: true,
-          lazyLoadMaxDuration: 30,
-        });
-        player.attachMediaElement(video);
-        player.load();
-        player.on('error', () => {
-          player.unload();
-          player.detachMediaElement();
-          loadWithNativeVideo(proxiedUrl);
-        });
-        player.on('playing', () => {
-          setIsPlaying(true);
-          setLoadAttempted(true);
-        });
-        player.play();
-      } catch {
-        loadWithNativeVideo(proxiedUrl);
-      }
-    };
-
-    const tryHls = async () => {
-      try {
+    try {
+      if (isM3u8) {
         const Hls = (await import('hls.js')).default;
         if (!Hls.isSupported || !Hls.isSupported()) {
-          loadWithNativeVideo(proxiedUrl);
+          loadWithNativeVideo(streamUrl);
           return;
         }
-        const hls = new Hls();
-        hls.loadSource(proxiedUrl);
+        const hls = new Hls({
+          // Config for retries
+          fragLoadingMaxRetry: MAX_RETRIES,
+          levelLoadingMaxRetry: MAX_RETRIES,
+          manifestLoadingMaxRetry: MAX_RETRIES,
+          autoStartLoad: true,
+          maxBufferLength: 30, // seconds
+          maxMaxBufferLength: 60, // seconds
+        });
+        hls.loadSource(streamUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {});
@@ -122,24 +112,55 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
         hls.on(Hls.Events.ERROR, (_: any, data: any) => {
           if (data.fatal) {
             hls.destroy();
-            loadWithNativeVideo(proxiedUrl);
+            handleError(data, `HLS fatal error: ${data.details}.`);
+          } else {
+            // Non-fatal, hls.js might recover or try again
+            console.warn('[Player] HLS non-fatal error:', data.details);
           }
         });
-      } catch {
-        loadWithNativeVideo(proxiedUrl);
+      } else if (isTs) {
+        const mpegts = (await import('mpegts.js')) as any;
+        if (!mpegts.isSupported || !mpegts.isSupported()) {
+          loadWithNativeVideo(streamUrl);
+          return;
+        }
+        const player = mpegts.createPlayer({
+          type: 'mpegts',
+          url: streamUrl,
+          isLive: !isVod,
+        }, {
+          enableWorker: false,
+          liveBufferLatencyChasing: true,
+          lazyLoad: true,
+          lazyLoadMaxDuration: 30,
+          // mpegts.js does not have explicit retry config, relying on `on('error')`
+        });
+        player.attachMediaElement(video);
+        player.load();
+        player.on('error', (e: any) => {
+          player.unload();
+          player.detachMediaElement();
+          handleError(e, 'MPEG-TS playback error.');
+        });
+        player.on('playing', () => {
+          setIsPlaying(true);
+        });
+        player.play();
+      } else {
+        loadWithNativeVideo(streamUrl);
       }
-    };
-
-    if (isM3u8) {
-      tryHls();
-    } else if (isTs) {
-      tryMpegts();
-    } else {
-      loadWithNativeVideo(proxiedUrl);
+    } catch (e) {
+      handleError(e, 'Player initialization failed.');
     }
+  }, [proxiedUrl, isVod]); // proxiedUrl as dependency
 
-    return cleanup;
-  }, [url, proxiedUrl, cleanup, isVod]);
+  useEffect(() => {
+    if (!url) return;
+    cleanup();
+    setRetryCount(0);
+    setLoadAttempted(false); // Reset loadAttempted to show spinner initially
+    playStream(proxiedUrl, 0);
+  }, [url, proxiedUrl, cleanup, playStream]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
@@ -168,7 +189,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
           <div className="absolute inset-0 flex items-center justify-center bg-black/80">
             <div className="text-center p-6 max-w-md">
               <p className="text-red-400 text-lg mb-2">Playback Error</p>
-              <p className="text-gray-400 text-sm mb-4">{error}</p>
+              <p className="text-gray-400 text-sm mb-4">{error} {retryCount > 0 && `(Retried ${retryCount} time${retryCount > 1 ? 's' : ''})`}</p>
               <button
                 onClick={onClose}
                 className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg"
