@@ -209,6 +209,25 @@ export const useMovieCategories = (client: StalkerClient) => {
   };
 };
 
+export const useMovieCategoriesWithError = (client: StalkerClient) => {
+  const portalId = client?.getAccount()?.id || 'default';
+
+  const { categories, isLoading, refresh, isRefreshing } = useCategories(
+    'vod',
+    portalId,
+    async () => {
+      return await client.getVODCategories();
+    },
+  );
+
+  return {
+    data: categories,
+    isLoading,
+    refetch: refresh,
+    isRefetching: isRefreshing,
+  };
+};
+
 // ─── Movie details ────────────────────────────────────────────────────────────
 
 export const useMovieDetails = (client: StalkerClient, movieId?: string, cmd?: string) => {
