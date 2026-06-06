@@ -1,13 +1,38 @@
 import { Store } from '@tauri-apps/plugin-store';
 import type { SupportedLanguage } from '@/lib/translations';
 
+const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+
 let storeInstance: Store | null = null;
 
 const STORE_NAME = 'app_settings';
+const LOCAL_STORAGE_KEY = 'tauri_fallback_app_settings';
 
-async function getStore(): Promise<Store> {
-  storeInstance ??= await Store.load(STORE_NAME);
-  return storeInstance;
+function getLocalSettings(): Record<string, unknown> {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalSettings(settings: Record<string, unknown>): void {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('[Settings] Error saving to localStorage:', e);
+  }
+}
+
+async function getStore(): Promise<Store | null> {
+  if (!isTauri) return null;
+  try {
+    storeInstance ??= await Store.load(STORE_NAME);
+    return storeInstance;
+  } catch {
+    return null;
+  }
 }
 
 // Settings types
@@ -73,9 +98,16 @@ export async function getSettings(): Promise<AppSettings> {
   const store = await getStore();
   const settings: Record<string, unknown> = {};
 
-  for (const key of Object.keys(DEFAULT_SETTINGS)) {
-    const value = await store.get(key);
-    settings[key] = value ?? (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[key];
+  if (store) {
+    for (const key of Object.keys(DEFAULT_SETTINGS)) {
+      const value = await store.get(key);
+      settings[key] = value ?? (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[key];
+    }
+  } else {
+    const local = getLocalSettings();
+    for (const key of Object.keys(DEFAULT_SETTINGS)) {
+      settings[key] = local[key] ?? (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[key];
+    }
   }
 
   return settings as unknown as AppSettings;
@@ -88,7 +120,14 @@ export async function getSetting<K extends keyof AppSettings>(
   key: K
 ): Promise<AppSettings[K]> {
   const store = await getStore();
-  const value = await store.get<AppSettings[K]>(key);
+  let value: AppSettings[K] | undefined | null;
+
+  if (store) {
+    value = await store.get<AppSettings[K]>(key);
+  } else {
+    const local = getLocalSettings();
+    value = local[key] as AppSettings[K] | undefined;
+  }
   
   if (value !== undefined && value !== null) {
     return value;
@@ -111,8 +150,14 @@ export async function getSetting<K extends keyof AppSettings>(
     } else {
       detectedLang = 'en';
     }
-    await store.set(key, detectedLang);
-    await store.save();
+    if (store) {
+      await store.set(key, detectedLang);
+      await store.save();
+    } else {
+      const local = getLocalSettings();
+      local[key] = detectedLang;
+      saveLocalSettings(local);
+    }
     return detectedLang as AppSettings[K];
   }
 
@@ -127,8 +172,14 @@ export async function setSetting<K extends keyof AppSettings>(
   value: AppSettings[K]
 ): Promise<void> {
   const store = await getStore();
-  await store.set(key, value);
-  await store.save();
+  if (store) {
+    await store.set(key, value);
+    await store.save();
+  } else {
+    const local = getLocalSettings();
+    local[key] = value;
+    saveLocalSettings(local);
+  }
 }
 
 /**
@@ -136,10 +187,18 @@ export async function setSetting<K extends keyof AppSettings>(
  */
 export async function setSettings(settings: Partial<AppSettings>): Promise<void> {
   const store = await getStore();
-  for (const [key, value] of Object.entries(settings)) {
-    await store.set(key, value);
+  if (store) {
+    for (const [key, value] of Object.entries(settings)) {
+      await store.set(key, value);
+    }
+    await store.save();
+  } else {
+    const local = getLocalSettings();
+    for (const [key, value] of Object.entries(settings)) {
+      local[key] = value;
+    }
+    saveLocalSettings(local);
   }
-  await store.save();
 }
 
 /**
@@ -147,10 +206,14 @@ export async function setSettings(settings: Partial<AppSettings>): Promise<void>
  */
 export async function resetSettings(): Promise<void> {
   const store = await getStore();
-  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
-    await store.set(key, value);
+  if (store) {
+    for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+      await store.set(key, value);
+    }
+    await store.save();
+  } else {
+    saveLocalSettings({ ...DEFAULT_SETTINGS } as unknown as Record<string, unknown>);
   }
-  await store.save();
 }
 
 /**
@@ -158,8 +221,16 @@ export async function resetSettings(): Promise<void> {
  */
 export async function clearSettings(): Promise<void> {
   const store = await getStore();
-  await store.clear();
-  await store.save();
+  if (store) {
+    await store.clear();
+    await store.save();
+  } else {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  }
 }
 
 // Keywords that indicate adult content (case-insensitive)

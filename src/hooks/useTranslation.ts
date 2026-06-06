@@ -46,7 +46,7 @@ export const useTranslation = () => {
   }, []);
 
   const t = useCallback((key: TranslationKey, values?: Record<string, string | number>): string => {
-    let text: string = translations[currentLang][key] || translations['en'][key] || key;
+    let text: string = translations[currentLang][key] || translations['pl'][key] || key;
     if (values) {
       Object.entries(values).forEach(([k, v]) => {
         text = text.replaceAll(`{{${k}}}`, String(v));

@@ -31,36 +31,37 @@ export class StalkerClient {
   token: string | null = null;
   private tokenExpiresAt: Date | null = null;
 
-  constructor(account: StalkerAccount, options?: { timezone?: string; timeout?: number }) {
+  constructor(account: StalkerAccount, options?: { timezone?: string; timeout?: number; corsProxy?: string }) {
     this.account = account;
     const timezone = options?.timezone ?? DEFAULT_TIMEZONE;
-    
+
     // Detect Tauri environment using OS plugin (most reliable)
     let osPlatform: string | null;
     try {
-      osPlatform = platform(); // Returns 'android' | 'ios' | 'windows' | 'macos' | 'linux' | etc.
+      osPlatform = platform();
     } catch (e) {
-      // OS plugin not available - not in Tauri
       this.logger.debug('Platform detection failed, not in Tauri', e);
       osPlatform = null;
     }
 
-    // Fallback detection methods
     const hasTauriAPI = globalThis.window !== undefined && '__TAURI__' in globalThis.window;
     const isTauriBuild = (globalThis as any).__TAURI_BUILD__ === true;
     const isLocalhost = globalThis.window !== undefined &&
                        (globalThis.window.location.hostname === 'localhost' ||
                         globalThis.window.location.hostname === '127.0.0.1' ||
-                        globalThis.window.location.hostname === 'tauri.localhost' || // Android/iOS WebView
+                        globalThis.window.location.hostname === 'tauri.localhost' ||
                         globalThis.window.location.protocol === 'tauri:');
 
-    // Use Tauri HTTP if OS plugin detected a platform OR any fallback indicator
     this.useTauri = !!osPlatform || hasTauriAPI || isTauriBuild || isLocalhost;
 
-    // Sanitize portalUrl - remove null bytes and other problematic characters
+    // Default to same-origin Vercel serverless proxy in browser mode
+    let corsProxy = options?.corsProxy || '';
+    if (!this.useTauri && !corsProxy && typeof window !== 'undefined') {
+      corsProxy = window.location.origin + '/api/proxy';
+    }
+
     const sanitizedPortalUrl = account.portalUrl.replaceAll('\x00', '').trim();
 
-    // Ensure URL ends with /c/ (required by Stalker middleware)
     let baseURL = sanitizedPortalUrl.endsWith('/')
       ? sanitizedPortalUrl
       : sanitizedPortalUrl + '/';
@@ -70,7 +71,6 @@ export class StalkerClient {
       baseURL += '/c/';
     }
 
-    // Log only once per session to avoid spam
     if (!globalThis.window.__STALKER_CLIENT_LOGGED__) {
       console.log('StalkerClient environment detection:', {
         useTauri: this.useTauri,
@@ -80,14 +80,13 @@ export class StalkerClient {
         isLocalhost,
         hostname: globalThis.window.location.hostname,
         protocol: globalThis.window.location.protocol,
-        tauriEnv: (globalThis as any).__TAURI_BUILD__
+        tauriEnv: (globalThis as any).__TAURI_BUILD__,
+        corsProxy: corsProxy || 'none',
       });
       globalThis.window.__STALKER_CLIENT_LOGGED__ = true;
     }
 
     if (this.useTauri) {
-      // Use Tauri HTTP client - no CORS issues!
-      // Cookie with MAC is required for EPG and other requests
       const cookieHeader = `mac=${this.account.mac}; stb_lang=${DEFAULT_LANGUAGE}; timezone=${timezone}`;
       this.tauriHttp = new TauriHttpClient(baseURL, {
         'User-Agent': USER_AGENT,
@@ -97,24 +96,59 @@ export class StalkerClient {
         'Cookie': cookieHeader,
         'Connection': 'keep-alive',
       });
-      this.axios = {} as AxiosInstance; // Placeholder - won't be used
+      this.axios = {} as AxiosInstance;
     } else {
-      // Use Axios for browser development - will have CORS issues
       const cookieHeader = `mac=${this.account.mac}; stb_lang=${DEFAULT_LANGUAGE}; timezone=${timezone}`;
       const timeout = options?.timeout ?? 15000;
-      this.axios = axios.create({
-        baseURL,
-        timeout,
-        withCredentials: true,
-        headers: {
-          'User-Agent': USER_AGENT,
-          'X-User-Agent': USER_AGENT,
-          'Accept': '*/*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cookie': cookieHeader,
-          'Connection': 'keep-alive',
-        },
-      });
+
+      if (corsProxy) {
+        const proxyBase = corsProxy.replace(/\/+$/, '');
+        this.axios = axios.create({
+          baseURL: proxyBase + '/',
+          timeout,
+          headers: { 'Accept': 'application/json' },
+          paramsSerializer: { serialize: (p) => new URLSearchParams(p).toString() },
+        });
+        this.axios.interceptors.request.use((config) => {
+          const targetBase = baseURL.replace(/\/+$/, '');
+          const targetPath = (config.url || '').replace(/^\//, '');
+          let fullUrl = targetBase + '/' + targetPath;
+
+          const auth = (config.headers as any)?.Authorization || '';
+          const extraParams: Record<string, string> = {};
+          if (auth) {
+            extraParams._auth = String(auth);
+          }
+
+          if (config.params && Object.keys(config.params).length > 0) {
+            const qs = new URLSearchParams();
+            for (const [k, v] of Object.entries(config.params)) {
+              qs.set(k, String(v));
+            }
+            fullUrl += '?' + qs.toString();
+          }
+
+          config.url = '';
+          config.params = { url: fullUrl, ...extraParams };
+          config.method = 'get';
+          (config.headers as any) = { 'Accept': 'application/json' };
+          return config;
+        });
+      } else {
+        this.axios = axios.create({
+          baseURL,
+          timeout,
+          withCredentials: true,
+          headers: {
+            'User-Agent': USER_AGENT,
+            'X-User-Agent': USER_AGENT,
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cookie': cookieHeader,
+            'Connection': 'keep-alive',
+          },
+        });
+      }
       this.tauriHttp = null;
     }
   }
@@ -163,6 +197,8 @@ export class StalkerClient {
       } else if (this.useTauri && this.tauriHttp) {
         this.tauriHttp.setHeader('Authorization', `Bearer ${this.token}`);
       }
+
+
 
       if (!this.token) {
         throw new Error('Handshake failed - token is null');

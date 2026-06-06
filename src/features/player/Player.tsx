@@ -1,14 +1,8 @@
-// =========================
-// 🎬 PLAYER — Platform-Aware Wrapper
-// =========================
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MpvPlayer } from './mpv/MpvPlayer';
 import { ExoPlayer } from './exo/ExoPlayer';
+import { BrowserPlayer } from './browser/BrowserPlayer';
 import { useResumeStore } from '@/store/resume.store';
-import { platform } from '@tauri-apps/plugin-os';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PlayerProps {
   url: string;
@@ -26,7 +20,8 @@ interface PlayerProps {
   onChannelChange?: (channel: any) => void;
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+const isTauriEnv = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+
 const PlayerComponent: React.FC<PlayerProps> = ({
   url, name, channelId, client, buffering = false, isVod = false, movieId, resumePosition = 0, genreId, onClose, onEnded, onNextEpisode, onChannelChange,
 }) => {
@@ -34,21 +29,88 @@ const PlayerComponent: React.FC<PlayerProps> = ({
   const [currentPlatform, setCurrentPlatform] = useState<string>('desktop');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Detect platform using OS plugin
+  const isBrowser = !isTauriEnv;
+
   useEffect(() => {
-    const detectPlatform = () => {
+    if (isBrowser) {
+      setIsLoading(false);
+      return;
+    }
+    const detectPlatform = async () => {
       try {
-        const osPlatform = platform(); // 'android' | 'ios' | 'windows' | 'macOS' | 'linux'
+        const { platform } = await import('@tauri-apps/plugin-os');
+        const osPlatform = platform();
         setCurrentPlatform(osPlatform);
       } catch {
-        // Plugin not available - assume desktop
         setCurrentPlatform('desktop');
       } finally {
         setIsLoading(false);
       }
     };
     detectPlatform();
-  }, []);
+  }, [isBrowser]);
+
+  const player = useMemo(() => {
+    if (isLoading) return null;
+
+    if (isBrowser) {
+      return (
+        <BrowserPlayer
+          url={url}
+          name={name}
+          channelId={channelId}
+          client={client}
+          buffering={buffering}
+          isVod={isVod}
+          movieId={movieId}
+          resumePosition={resumePosition}
+          genreId={genreId}
+          onClose={onClose}
+          onEnded={onEnded}
+        />
+      );
+    }
+
+    const isMobile = currentPlatform === 'android' || currentPlatform === 'ios';
+
+    if (isMobile) {
+      return (
+        <ExoPlayer
+          url={url}
+          name={name}
+          channelId={channelId}
+          client={client}
+          buffering={buffering}
+          isVod={isVod}
+          movieId={movieId}
+          resumePosition={resumePosition}
+          setPosition={setPosition}
+          genreId={genreId}
+          onChannelChange={onChannelChange}
+          onClose={onClose}
+          onEnded={onEnded}
+        />
+      );
+    }
+
+    return (
+      <MpvPlayer
+        url={url}
+        name={name}
+        channelId={channelId}
+        client={client}
+        buffering={buffering}
+        isVod={isVod}
+        movieId={movieId}
+        resumePosition={resumePosition}
+        genreId={genreId}
+        onChannelChange={onChannelChange}
+        onClose={onClose}
+        onEnded={onEnded}
+        onNextEpisode={onNextEpisode}
+      />
+    );
+  }, [isLoading, isBrowser, currentPlatform, url, name, channelId, client, buffering, isVod, movieId, resumePosition, genreId, onClose, onEnded, onNextEpisode, onChannelChange, setPosition]);
 
   if (isLoading) {
     return (
@@ -58,46 +120,7 @@ const PlayerComponent: React.FC<PlayerProps> = ({
     );
   }
 
-  // Use ExoPlayer for Android, MPV for desktop (Linux/Windows/macOS)
-  const isMobile = currentPlatform === 'android' || currentPlatform === 'ios';
-
-  if (isMobile) {
-    return (
-      <ExoPlayer
-        url={url}
-        name={name}
-        channelId={channelId}
-        client={client}
-        buffering={buffering}
-        isVod={isVod}
-        movieId={movieId}
-        resumePosition={resumePosition}
-        setPosition={setPosition}
-        genreId={genreId}
-        onChannelChange={onChannelChange}
-        onClose={onClose}
-        onEnded={onEnded}
-      />
-    );
-  }
-
-  return (
-    <MpvPlayer
-      url={url}
-      name={name}
-      channelId={channelId}
-      client={client}
-      buffering={buffering}
-      isVod={isVod}
-      movieId={movieId}
-      resumePosition={resumePosition}
-      genreId={genreId}
-      onChannelChange={onChannelChange}
-      onClose={onClose}
-      onEnded={onEnded}
-      onNextEpisode={onNextEpisode}
-    />
-  );
+  return player;
 };
 
 export const Player = React.memo(PlayerComponent);

@@ -34,20 +34,20 @@ const mockUseTVNavigation = useTVNavigation as jest.MockedFunction<typeof useTVN
 
 const mockT = jest.fn((key: string) => {
   const translations: Record<string, string> = {
-    addPortal: 'Dodaj portal',
-    editPortal: 'Edytuj portal',
-    name: 'Nazwa',
+    addPortal: 'Add Portal',
+    editPortal: 'Edit Portal',
+    name: 'Name',
     login: 'Login',
-    password: 'Hasło',
-    portalUrl: 'URL portalu',
-    mac: 'Adres MAC',
-    description: 'Opis',
-    save: 'Zapisz',
-    cancel: 'Anuluj',
-    nameRequired: 'Nazwa jest wymagana',
-    portalUrlRequired: 'URL portalu jest wymagany',
-    macRequired: 'Adres MAC jest wymagany',
-    invalidUrl: 'Nieprawidłowy URL',
+    password: 'Password',
+    portalUrl: 'Portal URL',
+    mac: 'MAC Address',
+    description: 'Description',
+    save: 'Save',
+    cancel: 'Cancel',
+    nameRequired: 'Name is required',
+    portalUrlRequired: 'Portal URL is required',
+    macRequired: 'MAC address is required',
+    invalidUrl: 'Invalid URL',
   };
   return translations[key] || key;
 });
@@ -87,7 +87,7 @@ describe('PortalForm', () => {
     render(<PortalForm onClose={mockOnClose} />);
 
     expect(screen.getByText('addNewPortal')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('np. Mój Portal IPTV')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('e.g. My IPTV Portal')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('http://portal.example.com/')).toBeInTheDocument();
   });
 
@@ -107,7 +107,7 @@ describe('PortalForm', () => {
 
     render(<PortalForm portal={mockPortal} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Edytuj portal')).toBeInTheDocument();
+    expect(screen.getByText('Edit Portal')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Test Portal')).toBeInTheDocument();
     expect(screen.getByDisplayValue('http://test.com')).toBeInTheDocument();
   });
@@ -115,7 +115,7 @@ describe('PortalForm', () => {
   it('should update form state when input changes', () => {
     render(<PortalForm onClose={mockOnClose} />);
 
-    const nameInput = screen.getByPlaceholderText('np. Mój Portal IPTV');
+    const nameInput = screen.getByPlaceholderText('e.g. My IPTV Portal');
     fireEvent.change(nameInput, { target: { value: 'New Portal' } });
 
     expect(screen.getByDisplayValue('New Portal')).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('PortalForm', () => {
   it('should show validation error when portal URL is empty', () => {
     render(<PortalForm onClose={mockOnClose} />);
 
-    const nameInput = screen.getByPlaceholderText('np. Mój Portal IPTV');
+    const nameInput = screen.getByPlaceholderText('e.g. My IPTV Portal');
     fireEvent.change(nameInput, { target: { value: 'Test Portal' } });
 
     const urlInput = screen.getByPlaceholderText('http://portal.example.com/');
@@ -151,7 +151,7 @@ describe('PortalForm', () => {
   it('should show validation error for invalid URL', () => {
     render(<PortalForm onClose={mockOnClose} />);
 
-    const nameInput = screen.getByPlaceholderText('np. Mój Portal IPTV');
+    const nameInput = screen.getByPlaceholderText('e.g. My IPTV Portal');
     fireEvent.change(nameInput, { target: { value: 'Test Portal' } });
 
     const urlInput = screen.getByPlaceholderText('http://portal.example.com/');
@@ -166,7 +166,7 @@ describe('PortalForm', () => {
   it('should call addPortal with valid form data', () => {
     render(<PortalForm onClose={mockOnClose} />);
 
-    const nameInput = screen.getByPlaceholderText('np. Mój Portal IPTV');
+    const nameInput = screen.getByPlaceholderText('e.g. My IPTV Portal');
     fireEvent.change(nameInput, { target: { value: 'Test Portal' } });
 
     const urlInput = screen.getByPlaceholderText('http://portal.example.com/');
@@ -206,7 +206,7 @@ describe('PortalForm', () => {
     const nameInput = screen.getByDisplayValue('Test Portal');
     fireEvent.change(nameInput, { target: { value: 'Updated Portal' } });
 
-    const saveButton = screen.getByText('Zapisz');
+    const saveButton = screen.getByText('Save');
     fireEvent.click(saveButton);
 
     expect(mockUpdatePortal).toHaveBeenCalledWith(
@@ -221,7 +221,7 @@ describe('PortalForm', () => {
   it('should call onClose when cancel button is clicked', () => {
     render(<PortalForm onClose={mockOnClose} />);
 
-    const cancelButton = screen.getByText('Anuluj');
+    const cancelButton = screen.getByText('Cancel');
     fireEvent.click(cancelButton);
 
     expect(mockOnClose).toHaveBeenCalled();
@@ -232,7 +232,7 @@ describe('PortalForm', () => {
 
     render(<PortalForm onClose={mockOnClose} />);
 
-    const nameInput = screen.getByPlaceholderText('np. Mój Portal IPTV');
+    const nameInput = screen.getByPlaceholderText('e.g. My IPTV Portal');
     fireEvent.change(nameInput, { target: { value: 'Test Portal' } });
 
     const urlInput = screen.getByPlaceholderText('http://portal.example.com/');

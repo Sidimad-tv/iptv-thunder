@@ -21,6 +21,7 @@ describe('tauriStorage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation();
+    jest.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(() => {
@@ -161,8 +162,8 @@ describe('tauriStorage', () => {
         const result = await tauriStorage.getItem('test-key');
         
         expect(result).toBeNull();
-        expect(console.error).toHaveBeenCalledWith(
-          '[TauriStorage] getItem error:',
+        expect(console.warn).toHaveBeenCalledWith(
+          '[TauriStorage] Tauri storage unavailable, falling back to localStorage:',
           expect.any(Error)
         );
       });
@@ -195,8 +196,8 @@ describe('tauriStorage', () => {
         
         await tauriStorage.setItem('test-key', { state: {}, version: 0 });
         
-        expect(console.error).toHaveBeenCalledWith(
-          '[TauriStorage] setItem error:',
+        expect(console.warn).toHaveBeenCalledWith(
+          '[TauriStorage] Tauri storage unavailable, falling back to localStorage:',
           expect.any(Error)
         );
       });
@@ -228,8 +229,8 @@ describe('tauriStorage', () => {
         
         await tauriStorage.removeItem('test-key');
         
-        expect(console.error).toHaveBeenCalledWith(
-          '[TauriStorage] removeItem error:',
+        expect(console.warn).toHaveBeenCalledWith(
+          '[TauriStorage] Tauri storage unavailable, falling back to localStorage:',
           expect.any(Error)
         );
       });
