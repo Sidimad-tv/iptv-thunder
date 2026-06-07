@@ -249,9 +249,19 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
         )}
 
         <div className="flex-1 relative overflow-hidden" style={{ background: 'transparent' }}>
+          {mpv.streamState === 'playing' && (
+            <div className="absolute bottom-4 right-4 z-10 opacity-50 pointer-events-none">
+              <img
+                src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
+                alt="S!d!m@dtv-STB"
+                className="w-12 h-12 object-contain"
+              />
+            </div>
+          )}
+
           {mpv.isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4"
-              style={{ background: 'black' }}>
+              style={{ background: 'rgba(0,0,0,0.85)' }}>
               <img
                 src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
                 alt="S!d!m@dtv-STB"

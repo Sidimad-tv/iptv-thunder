@@ -216,6 +216,15 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
             </div>
           </div>
         )}
+        {isPlaying && (
+          <div className="absolute bottom-3 right-3 z-10 opacity-40 pointer-events-none">
+            <img
+              src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
+              alt="S!d!m@dtv-STB"
+              className="w-10 h-10 object-contain"
+            />
+          </div>
+        )}
         {!isPlaying && !error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <img

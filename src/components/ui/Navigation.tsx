@@ -104,7 +104,7 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
       {/* Header */}
       <div className="p-3 md:p-4 lg:p-5 border-b dark:border-slate-700/30 border-gray-200/30">
         <div className="flex items-center justify-center">
-          <img src="/logo.svg" alt="IPTV Thunder" className="h-8 md:h-10 lg:h-12 w-auto max-w-full" />
+          <img src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png" alt="S!d!m@dtv-STB" className="h-8 md:h-10 lg:h-12 w-auto max-w-full" />
         </div>
       </div>
 

@@ -43,7 +43,7 @@ describe('Navigation', () => {
   it('should render navigation with title', () => {
     render(<Navigation items={defaultItems} />);
 
-    expect(screen.getByAltText('IPTV Thunder')).toBeInTheDocument();
+    expect(screen.getByAltText('S!d!m@dtv-STB')).toBeInTheDocument();
     expect(screen.getByText('Wyjdź')).toBeInTheDocument();
   });
 
