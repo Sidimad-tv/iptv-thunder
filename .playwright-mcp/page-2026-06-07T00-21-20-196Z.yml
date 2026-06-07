@@ -1,0 +1,414 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - img "IPTV Thunder" [ref=e8]
+      - generic [ref=e9]:
+        - button "Minimize window" [ref=e10]:
+          - img [ref=e11]
+        - button "Maximize window" [ref=e16]:
+          - img [ref=e17]
+        - button "Close window" [ref=e22]:
+          - img [ref=e23]
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - img "IPTV Thunder" [ref=e30]
+        - navigation [ref=e31]:
+          - button "🌐 Portal Management" [active] [ref=e33]:
+            - generic [ref=e35]: 🌐
+            - generic [ref=e36]: Portal Management
+          - button "⭐ For You" [ref=e39]:
+            - generic [ref=e40]: ⭐
+            - generic [ref=e41]: For You
+          - button "📡 Channels" [ref=e43]:
+            - generic [ref=e44]: 📡
+            - generic [ref=e45]: Channels
+            - img [ref=e47]
+          - generic [ref=e49]:
+            - button "🎬 Movies" [expanded] [ref=e50]:
+              - generic [ref=e51]: 🎬
+              - generic [ref=e52]: Movies
+              - img [ref=e54]
+            - generic [ref=e11699]:
+              - button "▸ Categories" [ref=e11700]:
+                - generic [ref=e11701]: ▸
+                - generic [ref=e11702]: Categories
+              - button "▸ Favorite categories" [ref=e11703]:
+                - generic [ref=e11704]: ▸
+                - generic [ref=e11705]: Favorite categories
+              - button "▸ Favorites" [ref=e11706]:
+                - generic [ref=e11707]: ▸
+                - generic [ref=e11708]: Favorites
+          - button "📺 Series" [ref=e57]:
+            - generic [ref=e58]: 📺
+            - generic [ref=e59]: Series
+            - img [ref=e61]
+          - button "⚙️ Settings" [ref=e64]:
+            - generic [ref=e65]: ⚙️
+            - generic [ref=e66]: Settings
+        - generic [ref=e67]:
+          - button "Exit" [ref=e68]:
+            - img [ref=e69]
+            - generic [ref=e72]: Exit
+          - paragraph [ref=e74]: v1.0.0
+      - generic [ref=e75]:
+        - textbox "Search" [ref=e11710]
+        - generic [ref=e11711]:
+          - generic [ref=e11712]:
+            - heading "Movie categories" [level=1] [ref=e11714]
+            - paragraph [ref=e11715]: Select a category to see available movies (59 kategorii)
+          - generic [ref=e11717]:
+            - button "Add to favorites All" [ref=e11718] [cursor=pointer]:
+              - generic [ref=e11719]:
+                - img [ref=e11721]
+                - button "Add to favorites" [ref=e11731]:
+                  - img [ref=e11732]
+              - heading "All" [level=3] [ref=e11734]
+            - button "Add to favorites |EN| ANIME" [ref=e11735] [cursor=pointer]:
+              - generic [ref=e11736]:
+                - img [ref=e11738]
+                - button "Add to favorites" [ref=e11746]:
+                  - img [ref=e11747]
+              - heading "|EN| ANIME" [level=3] [ref=e11749]
+            - button "Add to favorites |EN| DRAMA" [ref=e11750] [cursor=pointer]:
+              - generic [ref=e11751]:
+                - img [ref=e11753]
+                - button "Add to favorites" [ref=e11761]:
+                  - img [ref=e11762]
+              - heading "|EN| DRAMA" [level=3] [ref=e11764]
+            - button "Add to favorites |EN| FRENCH MOVIES / ENG SUB" [ref=e11765] [cursor=pointer]:
+              - generic [ref=e11766]:
+                - img [ref=e11768]
+                - button "Add to favorites" [ref=e11776]:
+                  - img [ref=e11777]
+              - heading "|EN| FRENCH MOVIES / ENG SUB" [level=3] [ref=e11779]
+            - button "Add to favorites |EN| DRAMA/ROMANCE" [ref=e11780] [cursor=pointer]:
+              - generic [ref=e11781]:
+                - img [ref=e11783]
+                - button "Add to favorites" [ref=e11791]:
+                  - img [ref=e11792]
+              - heading "|EN| DRAMA/ROMANCE" [level=3] [ref=e11794]
+            - button "Add to favorites |EN| ACTION/THRILLER" [ref=e11795] [cursor=pointer]:
+              - generic [ref=e11796]:
+                - img [ref=e11798]
+                - button "Add to favorites" [ref=e11806]:
+                  - img [ref=e11807]
+              - heading "|EN| ACTION/THRILLER" [level=3] [ref=e11809]
+            - button "Add to favorites |EN| SCIENCE FICTION/FANTASTY" [ref=e11810] [cursor=pointer]:
+              - generic [ref=e11811]:
+                - img [ref=e11813]
+                - button "Add to favorites" [ref=e11821]:
+                  - img [ref=e11822]
+              - heading "|EN| SCIENCE FICTION/FANTASTY" [level=3] [ref=e11824]
+            - button "Add to favorites |EN| NETFLIX" [ref=e11825] [cursor=pointer]:
+              - generic [ref=e11826]:
+                - img [ref=e11828]
+                - button "Add to favorites" [ref=e11836]:
+                  - img [ref=e11837]
+              - heading "|EN| NETFLIX" [level=3] [ref=e11839]
+            - button "Add to favorites |EN| HORROR/THRILLER" [ref=e11840] [cursor=pointer]:
+              - generic [ref=e11841]:
+                - img [ref=e11843]
+                - button "Add to favorites" [ref=e11851]:
+                  - img [ref=e11852]
+              - heading "|EN| HORROR/THRILLER" [level=3] [ref=e11854]
+            - button "Add to favorites |EN| ITALIAN MOVIES / ENG SUB" [ref=e11855] [cursor=pointer]:
+              - generic [ref=e11856]:
+                - img [ref=e11858]
+                - button "Add to favorites" [ref=e11866]:
+                  - img [ref=e11867]
+              - heading "|EN| ITALIAN MOVIES / ENG SUB" [level=3] [ref=e11869]
+            - button "Add to favorites |EN| CLASSIC MOVIES COLLECTION" [ref=e11870] [cursor=pointer]:
+              - generic [ref=e11871]:
+                - img [ref=e11873]
+                - button "Add to favorites" [ref=e11881]:
+                  - img [ref=e11882]
+              - heading "|EN| CLASSIC MOVIES COLLECTION" [level=3] [ref=e11884]
+            - button "Add to favorites |EN| ADVENTURE MOVIES" [ref=e11885] [cursor=pointer]:
+              - generic [ref=e11886]:
+                - img [ref=e11888]
+                - button "Add to favorites" [ref=e11896]:
+                  - img [ref=e11897]
+              - heading "|EN| ADVENTURE MOVIES" [level=3] [ref=e11899]
+            - button "Add to favorites |EN| COMEDY" [ref=e11900] [cursor=pointer]:
+              - generic [ref=e11901]:
+                - img [ref=e11903]
+                - button "Add to favorites" [ref=e11911]:
+                  - img [ref=e11912]
+              - heading "|EN| COMEDY" [level=3] [ref=e11914]
+            - button "Add to favorites |EN| BET/ALLBLK MOVIES" [ref=e11915] [cursor=pointer]:
+              - generic [ref=e11916]:
+                - img [ref=e11918]
+                - button "Add to favorites" [ref=e11926]:
+                  - img [ref=e11927]
+              - heading "|EN| BET/ALLBLK MOVIES" [level=3] [ref=e11929]
+            - button "Add to favorites |EN| CHILDREN/FAMILY" [ref=e11930] [cursor=pointer]:
+              - generic [ref=e11931]:
+                - img [ref=e11933]
+                - button "Add to favorites" [ref=e11941]:
+                  - img [ref=e11942]
+              - heading "|EN| CHILDREN/FAMILY" [level=3] [ref=e11944]
+            - button "Add to favorites |EN| FOREIGN MOVIES" [ref=e11945] [cursor=pointer]:
+              - generic [ref=e11946]:
+                - img [ref=e11948]
+                - button "Add to favorites" [ref=e11956]:
+                  - img [ref=e11957]
+              - heading "|EN| FOREIGN MOVIES" [level=3] [ref=e11959]
+            - button "Add to favorites |EN| HBO MAX" [ref=e11960] [cursor=pointer]:
+              - generic [ref=e11961]:
+                - img [ref=e11963]
+                - button "Add to favorites" [ref=e11971]:
+                  - img [ref=e11972]
+              - heading "|EN| HBO MAX" [level=3] [ref=e11974]
+            - button "Add to favorites |EN| WESTERNS" [ref=e11975] [cursor=pointer]:
+              - generic [ref=e11976]:
+                - img [ref=e11978]
+                - button "Add to favorites" [ref=e11986]:
+                  - img [ref=e11987]
+              - heading "|EN| WESTERNS" [level=3] [ref=e11989]
+            - button "Add to favorites |EN| PRE-RELEASES/SD CAM" [ref=e11990] [cursor=pointer]:
+              - generic [ref=e11991]:
+                - img [ref=e11993]
+                - button "Add to favorites" [ref=e12001]:
+                  - img [ref=e12002]
+              - heading "|EN| PRE-RELEASES/SD CAM" [level=3] [ref=e12004]
+            - button "Add to favorites |EN| DOCUMENTARY" [ref=e12005] [cursor=pointer]:
+              - generic [ref=e12006]:
+                - img [ref=e12008]
+                - button "Add to favorites" [ref=e12016]:
+                  - img [ref=e12017]
+              - heading "|EN| DOCUMENTARY" [level=3] [ref=e12019]
+            - button "Add to favorites |EN| NEW RELEASED" [ref=e12020] [cursor=pointer]:
+              - generic [ref=e12021]:
+                - img [ref=e12023]
+                - button "Add to favorites" [ref=e12031]:
+                  - img [ref=e12032]
+              - heading "|EN| NEW RELEASED" [level=3] [ref=e12034]
+            - button "Add to favorites |EN| DRAMA/COMEDY" [ref=e12035] [cursor=pointer]:
+              - generic [ref=e12036]:
+                - img [ref=e12038]
+                - button "Add to favorites" [ref=e12046]:
+                  - img [ref=e12047]
+              - heading "|EN| DRAMA/COMEDY" [level=3] [ref=e12049]
+            - button "Add to favorites |EN| UK MOVIES" [ref=e12050] [cursor=pointer]:
+              - generic [ref=e12051]:
+                - img [ref=e12053]
+                - button "Add to favorites" [ref=e12061]:
+                  - img [ref=e12062]
+              - heading "|EN| UK MOVIES" [level=3] [ref=e12064]
+            - button "Add to favorites |EN| PRIME+" [ref=e12065] [cursor=pointer]:
+              - generic [ref=e12066]:
+                - img [ref=e12068]
+                - button "Add to favorites" [ref=e12076]:
+                  - img [ref=e12077]
+              - heading "|EN| PRIME+" [level=3] [ref=e12079]
+            - button "Add to favorites |EN| BIBLICAL/RELIGIOUS" [ref=e12080] [cursor=pointer]:
+              - generic [ref=e12081]:
+                - img [ref=e12083]
+                - button "Add to favorites" [ref=e12091]:
+                  - img [ref=e12092]
+              - heading "|EN| BIBLICAL/RELIGIOUS" [level=3] [ref=e12094]
+            - button "Add to favorites |EN| MUSIC/CONCERTS" [ref=e12095] [cursor=pointer]:
+              - generic [ref=e12096]:
+                - img [ref=e12098]
+                - button "Add to favorites" [ref=e12106]:
+                  - img [ref=e12107]
+              - heading "|EN| MUSIC/CONCERTS" [level=3] [ref=e12109]
+            - button "Add to favorites |EN| BROADWAY/MUSICAL" [ref=e12110] [cursor=pointer]:
+              - generic [ref=e12111]:
+                - img [ref=e12113]
+                - button "Add to favorites" [ref=e12121]:
+                  - img [ref=e12122]
+              - heading "|EN| BROADWAY/MUSICAL" [level=3] [ref=e12124]
+            - button "Add to favorites |EN| MARVEL UNIVERSE" [ref=e12125] [cursor=pointer]:
+              - generic [ref=e12126]:
+                - img [ref=e12128]
+                - button "Add to favorites" [ref=e12136]:
+                  - img [ref=e12137]
+              - heading "|EN| MARVEL UNIVERSE" [level=3] [ref=e12139]
+            - button "Add to favorites |EN| DRAMA/CRIME" [ref=e12140] [cursor=pointer]:
+              - generic [ref=e12141]:
+                - img [ref=e12143]
+                - button "Add to favorites" [ref=e12151]:
+                  - img [ref=e12152]
+              - heading "|EN| DRAMA/CRIME" [level=3] [ref=e12154]
+            - button "Add to favorites |EN| STAND-UP COMEDY" [ref=e12155] [cursor=pointer]:
+              - generic [ref=e12156]:
+                - img [ref=e12158]
+                - button "Add to favorites" [ref=e12166]:
+                  - img [ref=e12167]
+              - heading "|EN| STAND-UP COMEDY" [level=3] [ref=e12169]
+            - button "Add to favorites |EN| ACTORS & DIRECTORS" [ref=e12170] [cursor=pointer]:
+              - generic [ref=e12171]:
+                - img [ref=e12173]
+                - button "Add to favorites" [ref=e12181]:
+                  - img [ref=e12182]
+              - heading "|EN| ACTORS & DIRECTORS" [level=3] [ref=e12184]
+            - button "Add to favorites |EN| GANGSTER & MAFIA" [ref=e12185] [cursor=pointer]:
+              - generic [ref=e12186]:
+                - img [ref=e12188]
+                - button "Add to favorites" [ref=e12196]:
+                  - img [ref=e12197]
+              - heading "|EN| GANGSTER & MAFIA" [level=3] [ref=e12199]
+            - button "Add to favorites |EN| CHRISTMAS MOVIES" [ref=e12200] [cursor=pointer]:
+              - generic [ref=e12201]:
+                - img [ref=e12203]
+                - button "Add to favorites" [ref=e12211]:
+                  - img [ref=e12212]
+              - heading "|EN| CHRISTMAS MOVIES" [level=3] [ref=e12214]
+            - button "Add to favorites |EN| DISNEY+" [ref=e12215] [cursor=pointer]:
+              - generic [ref=e12216]:
+                - img [ref=e12218]
+                - button "Add to favorites" [ref=e12226]:
+                  - img [ref=e12227]
+              - heading "|EN| DISNEY+" [level=3] [ref=e12229]
+            - button "Add to favorites |IR| PERSIAN SUB/DUB" [ref=e12230] [cursor=pointer]:
+              - generic [ref=e12231]:
+                - img [ref=e12233]
+                - button "Add to favorites" [ref=e12241]:
+                  - img [ref=e12242]
+              - heading "|IR| PERSIAN SUB/DUB" [level=3] [ref=e12244]
+            - button "Add to favorites APPLE+ MOVIES" [ref=e12245] [cursor=pointer]:
+              - generic [ref=e12246]:
+                - img [ref=e12248]
+                - button "Add to favorites" [ref=e12256]:
+                  - img [ref=e12257]
+              - heading "APPLE+ MOVIES" [level=3] [ref=e12259]
+            - button "Add to favorites |EN| CLASSIC CARTOONS" [ref=e12260] [cursor=pointer]:
+              - generic [ref=e12261]:
+                - img [ref=e12263]
+                - button "Add to favorites" [ref=e12271]:
+                  - img [ref=e12272]
+              - heading "|EN| CLASSIC CARTOONS" [level=3] [ref=e12274]
+            - button "Add to favorites |EN| HULU" [ref=e12275] [cursor=pointer]:
+              - generic [ref=e12276]:
+                - img [ref=e12278]
+                - button "Add to favorites" [ref=e12286]:
+                  - img [ref=e12287]
+              - heading "|EN| HULU" [level=3] [ref=e12289]
+            - button "Add to favorites |EN| TV MOVIES" [ref=e12290] [cursor=pointer]:
+              - generic [ref=e12291]:
+                - img [ref=e12293]
+                - button "Add to favorites" [ref=e12301]:
+                  - img [ref=e12302]
+              - heading "|EN| TV MOVIES" [level=3] [ref=e12304]
+            - button "Add to favorites |EN| COLLECTIONS" [ref=e12305] [cursor=pointer]:
+              - generic [ref=e12306]:
+                - img [ref=e12308]
+                - button "Add to favorites" [ref=e12316]:
+                  - img [ref=e12317]
+              - heading "|EN| COLLECTIONS" [level=3] [ref=e12319]
+            - button "Add to favorites |EN| HALLMARK MOVIES" [ref=e12320] [cursor=pointer]:
+              - generic [ref=e12321]:
+                - img [ref=e12323]
+                - button "Add to favorites" [ref=e12331]:
+                  - img [ref=e12332]
+              - heading "|EN| HALLMARK MOVIES" [level=3] [ref=e12334]
+            - button "Add to favorites |EN| PIXAR MOVIES" [ref=e12335] [cursor=pointer]:
+              - generic [ref=e12336]:
+                - img [ref=e12338]
+                - button "Add to favorites" [ref=e12346]:
+                  - img [ref=e12347]
+              - heading "|EN| PIXAR MOVIES" [level=3] [ref=e12349]
+            - button "Add to favorites TOP IMDB/OSCAR MOVIES" [ref=e12350] [cursor=pointer]:
+              - generic [ref=e12351]:
+                - img [ref=e12353]
+                - button "Add to favorites" [ref=e12361]:
+                  - img [ref=e12362]
+              - heading "TOP IMDB/OSCAR MOVIES" [level=3] [ref=e12364]
+            - button "Add to favorites |EN| WAR" [ref=e12365] [cursor=pointer]:
+              - generic [ref=e12366]:
+                - img [ref=e12368]
+                - button "Add to favorites" [ref=e12376]:
+                  - img [ref=e12377]
+              - heading "|EN| WAR" [level=3] [ref=e12379]
+            - button "Add to favorites |EN| 4K MOVIES" [ref=e12380] [cursor=pointer]:
+              - generic [ref=e12381]:
+                - img [ref=e12383]
+                - button "Add to favorites" [ref=e12391]:
+                  - img [ref=e12392]
+              - heading "|EN| 4K MOVIES" [level=3] [ref=e12394]
+            - button "Add to favorites |SPT| SPORT WWE" [ref=e12395] [cursor=pointer]:
+              - generic [ref=e12396]:
+                - img [ref=e12398]
+                - button "Add to favorites" [ref=e12406]:
+                  - img [ref=e12407]
+              - heading "|SPT| SPORT WWE" [level=3] [ref=e12409]
+            - button "Add to favorites APPLE+ KIDS" [ref=e12410] [cursor=pointer]:
+              - generic [ref=e12411]:
+                - img [ref=e12413]
+                - button "Add to favorites" [ref=e12421]:
+                  - img [ref=e12422]
+              - heading "APPLE+ KIDS" [level=3] [ref=e12424]
+            - button "Add to favorites |EN| 4K CHILDREN" [ref=e12425] [cursor=pointer]:
+              - generic [ref=e12426]:
+                - img [ref=e12428]
+                - button "Add to favorites" [ref=e12436]:
+                  - img [ref=e12437]
+              - heading "|EN| 4K CHILDREN" [level=3] [ref=e12439]
+            - button "Add to favorites |EN| MOVIES 2018-2021" [ref=e12440] [cursor=pointer]:
+              - generic [ref=e12441]:
+                - img [ref=e12443]
+                - button "Add to favorites" [ref=e12451]:
+                  - img [ref=e12452]
+              - heading "|EN| MOVIES 2018-2021" [level=3] [ref=e12454]
+            - button "Add to favorites NETFLIX KIDS" [ref=e12455] [cursor=pointer]:
+              - generic [ref=e12456]:
+                - img [ref=e12458]
+                - button "Add to favorites" [ref=e12466]:
+                  - img [ref=e12467]
+              - heading "NETFLIX KIDS" [level=3] [ref=e12469]
+            - button "Add to favorites NETFLIX MOVIES" [ref=e12470] [cursor=pointer]:
+              - generic [ref=e12471]:
+                - img [ref=e12473]
+                - button "Add to favorites" [ref=e12481]:
+                  - img [ref=e12482]
+              - heading "NETFLIX MOVIES" [level=3] [ref=e12484]
+            - button "Add to favorites NETFLIX ASIA" [ref=e12485] [cursor=pointer]:
+              - generic [ref=e12486]:
+                - img [ref=e12488]
+                - button "Add to favorites" [ref=e12496]:
+                  - img [ref=e12497]
+              - heading "NETFLIX ASIA" [level=3] [ref=e12499]
+            - button "Add to favorites DISNEY+ KIDS" [ref=e12500] [cursor=pointer]:
+              - generic [ref=e12501]:
+                - img [ref=e12503]
+                - button "Add to favorites" [ref=e12511]:
+                  - img [ref=e12512]
+              - heading "DISNEY+ KIDS" [level=3] [ref=e12514]
+            - button "Add to favorites DISNEY+ MOVIES" [ref=e12515] [cursor=pointer]:
+              - generic [ref=e12516]:
+                - img [ref=e12518]
+                - button "Add to favorites" [ref=e12526]:
+                  - img [ref=e12527]
+              - heading "DISNEY+ MOVIES" [level=3] [ref=e12529]
+            - button "Add to favorites |EN| 4K DOCUMENTARY/MUSIC/ STAND-UP" [ref=e12530] [cursor=pointer]:
+              - generic [ref=e12531]:
+                - img [ref=e12533]
+                - button "Add to favorites" [ref=e12541]:
+                  - img [ref=e12542]
+              - heading "|EN| 4K DOCUMENTARY/MUSIC/ STAND-UP" [level=3] [ref=e12544]
+            - button "Add to favorites |EN| 4K CLASSIC MOVIES" [ref=e12545] [cursor=pointer]:
+              - generic [ref=e12546]:
+                - img [ref=e12548]
+                - button "Add to favorites" [ref=e12556]:
+                  - img [ref=e12557]
+              - heading "|EN| 4K CLASSIC MOVIES" [level=3] [ref=e12559]
+            - button "Add to favorites |EN| 4K MAFIA & GANGSTER" [ref=e12560] [cursor=pointer]:
+              - generic [ref=e12561]:
+                - img [ref=e12563]
+                - button "Add to favorites" [ref=e12571]:
+                  - img [ref=e12572]
+              - heading "|EN| 4K MAFIA & GANGSTER" [level=3] [ref=e12574]
+            - button "Add to favorites 4K NETFLIX MOVIES" [ref=e12575] [cursor=pointer]:
+              - generic [ref=e12576]:
+                - img [ref=e12578]
+                - button "Add to favorites" [ref=e12586]:
+                  - img [ref=e12587]
+              - heading "4K NETFLIX MOVIES" [level=3] [ref=e12589]
+            - button "Add to favorites |SPT| SPORT UFC" [ref=e12590] [cursor=pointer]:
+              - generic [ref=e12591]:
+                - img [ref=e12593]
+                - button "Add to favorites" [ref=e12601]:
+                  - img [ref=e12602]
+              - heading "|SPT| SPORT UFC" [level=3] [ref=e12604]
+  - region "Toast notifications"

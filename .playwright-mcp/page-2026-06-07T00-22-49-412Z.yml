@@ -1,0 +1,708 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - img "IPTV Thunder" [ref=e8]
+      - generic [ref=e9]:
+        - button "Minimize window" [ref=e10]:
+          - img [ref=e11]
+        - button "Maximize window" [ref=e16]:
+          - img [ref=e17]
+        - button "Close window" [ref=e22]:
+          - img [ref=e23]
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - img "IPTV Thunder" [ref=e30]
+        - navigation [ref=e31]:
+          - button "🌐 Portal Management" [active] [ref=e33]:
+            - generic [ref=e35]: 🌐
+            - generic [ref=e36]: Portal Management
+          - button "⭐ For You" [ref=e39]:
+            - generic [ref=e40]: ⭐
+            - generic [ref=e41]: For You
+          - generic [ref=e42]:
+            - button "📡 Channels" [expanded] [ref=e43]:
+              - generic [ref=e44]: 📡
+              - generic [ref=e45]: Channels
+              - img [ref=e47]
+            - generic [ref=e12605]:
+              - button "▸ Categories" [ref=e12606]:
+                - generic [ref=e12607]: ▸
+                - generic [ref=e12608]: Categories
+              - button "▸ Favorite categories" [ref=e12609]:
+                - generic [ref=e12610]: ▸
+                - generic [ref=e12611]: Favorite categories
+              - button "▸ Favorite channels" [ref=e12612]:
+                - generic [ref=e12613]: ▸
+                - generic [ref=e12614]: Favorite channels
+          - button "🎬 Movies" [ref=e50]:
+            - generic [ref=e51]: 🎬
+            - generic [ref=e52]: Movies
+            - img [ref=e54]
+          - button "📺 Series" [ref=e57]:
+            - generic [ref=e58]: 📺
+            - generic [ref=e59]: Series
+            - img [ref=e61]
+          - button "⚙️ Settings" [ref=e64]:
+            - generic [ref=e65]: ⚙️
+            - generic [ref=e66]: Settings
+        - generic [ref=e67]:
+          - button "Exit" [ref=e68]:
+            - img [ref=e69]
+            - generic [ref=e72]: Exit
+          - paragraph [ref=e74]: v1.0.0
+      - generic [ref=e75]:
+        - textbox "Search" [ref=e11710]
+        - generic [ref=e12615]:
+          - generic [ref=e12616]:
+            - heading "Channel categories" [level=1] [ref=e12617]
+            - paragraph [ref=e12618]: Select a category to see available channels
+          - generic [ref=e12620]:
+            - button "Add to favorites All" [ref=e12621] [cursor=pointer]:
+              - generic [ref=e12622]:
+                - img [ref=e12624]
+                - button "Add to favorites" [ref=e12634]:
+                  - img [ref=e12635]
+              - heading "All" [level=3] [ref=e12637]
+            - button "Add to favorites PT| GENERALISTAS" [ref=e12638] [cursor=pointer]:
+              - generic [ref=e12639]:
+                - img [ref=e12641]
+                - button "Add to favorites" [ref=e12649]:
+                  - img [ref=e12650]
+              - heading "PT| GENERALISTAS" [level=3] [ref=e12652]
+            - button "Add to favorites PT| NOTICIAS" [ref=e12653] [cursor=pointer]:
+              - generic [ref=e12654]:
+                - img [ref=e12656]
+                - button "Add to favorites" [ref=e12664]:
+                  - img [ref=e12665]
+              - heading "PT| NOTICIAS" [level=3] [ref=e12667]
+            - button "Add to favorites PT| DESPORTO" [ref=e12668] [cursor=pointer]:
+              - generic [ref=e12669]:
+                - img [ref=e12671]
+                - button "Add to favorites" [ref=e12679]:
+                  - img [ref=e12680]
+              - heading "PT| DESPORTO" [level=3] [ref=e12682]
+            - button "Add to favorites PT| DAZN EXCLUSIVE ᴴᴰ/ᴿᴬᵂ" [ref=e12683] [cursor=pointer]:
+              - generic [ref=e12684]:
+                - img [ref=e12686]
+                - button "Add to favorites" [ref=e12694]:
+                  - img [ref=e12695]
+              - heading "PT| DAZN EXCLUSIVE ᴴᴰ/ᴿᴬᵂ" [level=3] [ref=e12697]
+            - button "Add to favorites PT| DAZN PPV" [ref=e12698] [cursor=pointer]:
+              - generic [ref=e12699]:
+                - img [ref=e12701]
+                - button "Add to favorites" [ref=e12709]:
+                  - img [ref=e12710]
+              - heading "PT| DAZN PPV" [level=3] [ref=e12712]
+            - button "Add to favorites PT| FILMES E SÉRIES" [ref=e12713] [cursor=pointer]:
+              - generic [ref=e12714]:
+                - img [ref=e12716]
+                - button "Add to favorites" [ref=e12724]:
+                  - img [ref=e12725]
+              - heading "PT| FILMES E SÉRIES" [level=3] [ref=e12727]
+            - button "Add to favorites PT| 24/7" [ref=e12728] [cursor=pointer]:
+              - generic [ref=e12729]:
+                - img [ref=e12731]
+                - button "Add to favorites" [ref=e12739]:
+                  - img [ref=e12740]
+              - heading "PT| 24/7" [level=3] [ref=e12742]
+            - button "Add to favorites PT| CULTURA" [ref=e12743] [cursor=pointer]:
+              - generic [ref=e12744]:
+                - img [ref=e12746]
+                - button "Add to favorites" [ref=e12754]:
+                  - img [ref=e12755]
+              - heading "PT| CULTURA" [level=3] [ref=e12757]
+            - button "Add to favorites PT| CRIANCAS" [ref=e12758] [cursor=pointer]:
+              - generic [ref=e12759]:
+                - img [ref=e12761]
+                - button "Add to favorites" [ref=e12769]:
+                  - img [ref=e12770]
+              - heading "PT| CRIANCAS" [level=3] [ref=e12772]
+            - button "Add to favorites PT| INTRETENIMENTO" [ref=e12773] [cursor=pointer]:
+              - generic [ref=e12774]:
+                - img [ref=e12776]
+                - button "Add to favorites" [ref=e12784]:
+                  - img [ref=e12785]
+              - heading "PT| INTRETENIMENTO" [level=3] [ref=e12787]
+            - button "Add to favorites PT| RELIGIAO" [ref=e12788] [cursor=pointer]:
+              - generic [ref=e12789]:
+                - img [ref=e12791]
+                - button "Add to favorites" [ref=e12799]:
+                  - img [ref=e12800]
+              - heading "PT| RELIGIAO" [level=3] [ref=e12802]
+            - button "Add to favorites PT| MUSICA" [ref=e12803] [cursor=pointer]:
+              - generic [ref=e12804]:
+                - img [ref=e12806]
+                - button "Add to favorites" [ref=e12814]:
+                  - img [ref=e12815]
+              - heading "PT| MUSICA" [level=3] [ref=e12817]
+            - button "Add to favorites PT| INTERNACIONAL" [ref=e12818] [cursor=pointer]:
+              - generic [ref=e12819]:
+                - img [ref=e12821]
+                - button "Add to favorites" [ref=e12829]:
+                  - img [ref=e12830]
+              - heading "PT| INTERNACIONAL" [level=3] [ref=e12832]
+            - button "Add to favorites PT| VODAFONE ᴴᴰ" [ref=e12833] [cursor=pointer]:
+              - generic [ref=e12834]:
+                - img [ref=e12836]
+                - button "Add to favorites" [ref=e12844]:
+                  - img [ref=e12845]
+              - heading "PT| VODAFONE ᴴᴰ" [level=3] [ref=e12847]
+            - button "Add to favorites BEIN SPORTS MAX NM" [ref=e12848] [cursor=pointer]:
+              - generic [ref=e12849]:
+                - img [ref=e12851]
+                - button "Add to favorites" [ref=e12859]:
+                  - img [ref=e12860]
+              - heading "BEIN SPORTS MAX NM" [level=3] [ref=e12862]
+            - button "Add to favorites BEIN SPORTS MAX ⁸ᴷ" [ref=e12863] [cursor=pointer]:
+              - generic [ref=e12864]:
+                - img [ref=e12866]
+                - button "Add to favorites" [ref=e12874]:
+                  - img [ref=e12875]
+              - heading "BEIN SPORTS MAX ⁸ᴷ" [level=3] [ref=e12877]
+            - button "Add to favorites BEIN SPORTS MAX FM" [ref=e12878] [cursor=pointer]:
+              - generic [ref=e12879]:
+                - img [ref=e12881]
+                - button "Add to favorites" [ref=e12889]:
+                  - img [ref=e12890]
+              - heading "BEIN SPORTS MAX FM" [level=3] [ref=e12892]
+            - button "Add to favorites BEIN SPORTS MAX BE" [ref=e12893] [cursor=pointer]:
+              - generic [ref=e12894]:
+                - img [ref=e12896]
+                - button "Add to favorites" [ref=e12904]:
+                  - img [ref=e12905]
+              - heading "BEIN SPORTS MAX BE" [level=3] [ref=e12907]
+            - button "Add to favorites BEIN SPORTS MAX G" [ref=e12908] [cursor=pointer]:
+              - generic [ref=e12909]:
+                - img [ref=e12911]
+                - button "Add to favorites" [ref=e12919]:
+                  - img [ref=e12920]
+              - heading "BEIN SPORTS MAX G" [level=3] [ref=e12922]
+            - button "Add to favorites WORLD CUP 2026" [ref=e12923] [cursor=pointer]:
+              - generic [ref=e12924]:
+                - img [ref=e12926]
+                - button "Add to favorites" [ref=e12934]:
+                  - img [ref=e12935]
+              - heading "WORLD CUP 2026" [level=3] [ref=e12937]
+            - button "Add to favorites WORLD CUP 2026 REPLAY" [ref=e12938] [cursor=pointer]:
+              - generic [ref=e12939]:
+                - img [ref=e12941]
+                - button "Add to favorites" [ref=e12949]:
+                  - img [ref=e12950]
+              - heading "WORLD CUP 2026 REPLAY" [level=3] [ref=e12952]
+            - button "Add to favorites US| ENTERTAINMENT" [ref=e12953] [cursor=pointer]:
+              - generic [ref=e12954]:
+                - img [ref=e12956]
+                - button "Add to favorites" [ref=e12964]:
+                  - img [ref=e12965]
+              - heading "US| ENTERTAINMENT" [level=3] [ref=e12967]
+            - button "Add to favorites US| NEWS NETWORK" [ref=e12968] [cursor=pointer]:
+              - generic [ref=e12969]:
+                - img [ref=e12971]
+                - button "Add to favorites" [ref=e12979]:
+                  - img [ref=e12980]
+              - heading "US| NEWS NETWORK" [level=3] [ref=e12982]
+            - button "Add to favorites US| SPECTRUM NETWORK" [ref=e12983] [cursor=pointer]:
+              - generic [ref=e12984]:
+                - img [ref=e12986]
+                - button "Add to favorites" [ref=e12994]:
+                  - img [ref=e12995]
+              - heading "US| SPECTRUM NETWORK" [level=3] [ref=e12997]
+            - button "Add to favorites US| KIDS NETWORK" [ref=e12998] [cursor=pointer]:
+              - generic [ref=e12999]:
+                - img [ref=e13001]
+                - button "Add to favorites" [ref=e13009]:
+                  - img [ref=e13010]
+              - heading "US| KIDS NETWORK" [level=3] [ref=e13012]
+            - button "Add to favorites US| SPORTS NETWORK" [ref=e13013] [cursor=pointer]:
+              - generic [ref=e13014]:
+                - img [ref=e13016]
+                - button "Add to favorites" [ref=e13024]:
+                  - img [ref=e13025]
+              - heading "US| SPORTS NETWORK" [level=3] [ref=e13027]
+            - button "Add to favorites 4K UHD 3840P" [ref=e13028] [cursor=pointer]:
+              - generic [ref=e13029]:
+                - img [ref=e13031]
+                - button "Add to favorites" [ref=e13039]:
+                  - img [ref=e13040]
+              - heading "4K UHD 3840P" [level=3] [ref=e13042]
+            - button "Add to favorites US| SOCCER PPV" [ref=e13043] [cursor=pointer]:
+              - generic [ref=e13044]:
+                - img [ref=e13046]
+                - button "Add to favorites" [ref=e13054]:
+                  - img [ref=e13055]
+              - heading "US| SOCCER PPV" [level=3] [ref=e13057]
+            - button "Add to favorites US| MAX ESPN ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [ref=e13058] [cursor=pointer]:
+              - generic [ref=e13059]:
+                - img [ref=e13061]
+                - button "Add to favorites" [ref=e13069]:
+                  - img [ref=e13070]
+              - heading "US| MAX ESPN ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [level=3] [ref=e13072]
+            - button "Add to favorites US| MOVIES NETWORK" [ref=e13073] [cursor=pointer]:
+              - generic [ref=e13074]:
+                - img [ref=e13076]
+                - button "Add to favorites" [ref=e13084]:
+                  - img [ref=e13085]
+              - heading "US| MOVIES NETWORK" [level=3] [ref=e13087]
+            - button "Add to favorites US| BIBLICAL/RELIGIOUS" [ref=e13088] [cursor=pointer]:
+              - generic [ref=e13089]:
+                - img [ref=e13091]
+                - button "Add to favorites" [ref=e13099]:
+                  - img [ref=e13100]
+              - heading "US| BIBLICAL/RELIGIOUS" [level=3] [ref=e13102]
+            - button "Add to favorites US| PRIME" [ref=e13103] [cursor=pointer]:
+              - generic [ref=e13104]:
+                - img [ref=e13106]
+                - button "Add to favorites" [ref=e13114]:
+                  - img [ref=e13115]
+              - heading "US| PRIME" [level=3] [ref=e13117]
+            - button "Add to favorites US| DIREC TV GO ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [ref=e13118] [cursor=pointer]:
+              - generic [ref=e13119]:
+                - img [ref=e13121]
+                - button "Add to favorites" [ref=e13129]:
+                  - img [ref=e13130]
+              - heading "US| DIREC TV GO ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [level=3] [ref=e13132]
+            - button "Add to favorites US| DIREC TV ᶜᶦᵗʸ ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [ref=e13133] [cursor=pointer]:
+              - generic [ref=e13134]:
+                - img [ref=e13136]
+                - button "Add to favorites" [ref=e13144]:
+                  - img [ref=e13145]
+              - heading "US| DIREC TV ᶜᶦᵗʸ ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [level=3] [ref=e13147]
+            - button "Add to favorites US| TUBI ᴿᴬᵂ" [ref=e13148] [cursor=pointer]:
+              - generic [ref=e13149]:
+                - img [ref=e13151]
+                - button "Add to favorites" [ref=e13159]:
+                  - img [ref=e13160]
+              - heading "US| TUBI ᴿᴬᵂ" [level=3] [ref=e13162]
+            - button "Add to favorites US| DAZN PPV" [ref=e13163] [cursor=pointer]:
+              - generic [ref=e13164]:
+                - img [ref=e13166]
+                - button "Add to favorites" [ref=e13174]:
+                  - img [ref=e13175]
+              - heading "US| DAZN PPV" [level=3] [ref=e13177]
+            - button "Add to favorites US| FIFA+ PPV" [ref=e13178] [cursor=pointer]:
+              - generic [ref=e13179]:
+                - img [ref=e13181]
+                - button "Add to favorites" [ref=e13189]:
+                  - img [ref=e13190]
+              - heading "US| FIFA+ PPV" [level=3] [ref=e13192]
+            - button "Add to favorites US| PARAMOUNT+ PPV" [ref=e13193] [cursor=pointer]:
+              - generic [ref=e13194]:
+                - img [ref=e13196]
+                - button "Add to favorites" [ref=e13204]:
+                  - img [ref=e13205]
+              - heading "US| PARAMOUNT+ PPV" [level=3] [ref=e13207]
+            - button "Add to favorites US| PARAMOUNT+ PPV VIP" [ref=e13208] [cursor=pointer]:
+              - generic [ref=e13209]:
+                - img [ref=e13211]
+                - button "Add to favorites" [ref=e13219]:
+                  - img [ref=e13220]
+              - heading "US| PARAMOUNT+ PPV VIP" [level=3] [ref=e13222]
+            - button "Add to favorites US| PEACOCK PPV" [ref=e13223] [cursor=pointer]:
+              - generic [ref=e13224]:
+                - img [ref=e13226]
+                - button "Add to favorites" [ref=e13234]:
+                  - img [ref=e13235]
+              - heading "US| PEACOCK PPV" [level=3] [ref=e13237]
+            - button "Add to favorites US| B1G+ PPV" [ref=e13238] [cursor=pointer]:
+              - generic [ref=e13239]:
+                - img [ref=e13241]
+                - button "Add to favorites" [ref=e13249]:
+                  - img [ref=e13250]
+              - heading "US| B1G+ PPV" [level=3] [ref=e13252]
+            - button "Add to favorites US| BTN+ PPV" [ref=e13253] [cursor=pointer]:
+              - generic [ref=e13254]:
+                - img [ref=e13256]
+                - button "Add to favorites" [ref=e13264]:
+                  - img [ref=e13265]
+              - heading "US| BTN+ PPV" [level=3] [ref=e13267]
+            - button "Add to favorites US| BALLY NETWORK" [ref=e13268] [cursor=pointer]:
+              - generic [ref=e13269]:
+                - img [ref=e13271]
+                - button "Add to favorites" [ref=e13279]:
+                  - img [ref=e13280]
+              - heading "US| BALLY NETWORK" [level=3] [ref=e13282]
+            - button "Add to favorites US| NBA NETWORK VIP" [ref=e13283] [cursor=pointer]:
+              - generic [ref=e13284]:
+                - img [ref=e13286]
+                - button "Add to favorites" [ref=e13294]:
+                  - img [ref=e13295]
+              - heading "US| NBA NETWORK VIP" [level=3] [ref=e13297]
+            - button "Add to favorites US| NBA PACKAGE" [ref=e13298] [cursor=pointer]:
+              - generic [ref=e13299]:
+                - img [ref=e13301]
+                - button "Add to favorites" [ref=e13309]:
+                  - img [ref=e13310]
+              - heading "US| NBA PACKAGE" [level=3] [ref=e13312]
+            - button "Add to favorites US| WNBA PACKAGE" [ref=e13313] [cursor=pointer]:
+              - generic [ref=e13314]:
+                - img [ref=e13316]
+                - button "Add to favorites" [ref=e13324]:
+                  - img [ref=e13325]
+              - heading "US| WNBA PACKAGE" [level=3] [ref=e13327]
+            - button "Add to favorites US| NCAAF PACKAGE" [ref=e13328] [cursor=pointer]:
+              - generic [ref=e13329]:
+                - img [ref=e13331]
+                - button "Add to favorites" [ref=e13339]:
+                  - img [ref=e13340]
+              - heading "US| NCAAF PACKAGE" [level=3] [ref=e13342]
+            - button "Add to favorites US| NHL PACKAGE" [ref=e13343] [cursor=pointer]:
+              - generic [ref=e13344]:
+                - img [ref=e13346]
+                - button "Add to favorites" [ref=e13354]:
+                  - img [ref=e13355]
+              - heading "US| NHL PACKAGE" [level=3] [ref=e13357]
+            - button "Add to favorites US| VIAPLAY NHL PPV" [ref=e13358] [cursor=pointer]:
+              - generic [ref=e13359]:
+                - img [ref=e13361]
+                - button "Add to favorites" [ref=e13369]:
+                  - img [ref=e13370]
+              - heading "US| VIAPLAY NHL PPV" [level=3] [ref=e13372]
+            - button "Add to favorites US| NFL NETWORK HULU" [ref=e13373] [cursor=pointer]:
+              - generic [ref=e13374]:
+                - img [ref=e13376]
+                - button "Add to favorites" [ref=e13384]:
+                  - img [ref=e13385]
+              - heading "US| NFL NETWORK HULU" [level=3] [ref=e13387]
+            - button "Add to favorites US| NFL PACKAGE" [ref=e13388] [cursor=pointer]:
+              - generic [ref=e13389]:
+                - img [ref=e13391]
+                - button "Add to favorites" [ref=e13399]:
+                  - img [ref=e13400]
+              - heading "US| NFL PACKAGE" [level=3] [ref=e13402]
+            - button "Add to favorites US| MLB PACKAGE" [ref=e13403] [cursor=pointer]:
+              - generic [ref=e13404]:
+                - img [ref=e13406]
+                - button "Add to favorites" [ref=e13414]:
+                  - img [ref=e13415]
+              - heading "US| MLB PACKAGE" [level=3] [ref=e13417]
+            - button "Add to favorites US| MILB TV PPV" [ref=e13418] [cursor=pointer]:
+              - generic [ref=e13419]:
+                - img [ref=e13421]
+                - button "Add to favorites" [ref=e13429]:
+                  - img [ref=e13430]
+              - heading "US| MILB TV PPV" [level=3] [ref=e13432]
+            - button "Add to favorites US| NFHS PPV" [ref=e13433] [cursor=pointer]:
+              - generic [ref=e13434]:
+                - img [ref=e13436]
+                - button "Add to favorites" [ref=e13444]:
+                  - img [ref=e13445]
+              - heading "US| NFHS PPV" [level=3] [ref=e13447]
+            - button "Add to favorites US| FLO COLLEGE PPV" [ref=e13448] [cursor=pointer]:
+              - generic [ref=e13449]:
+                - img [ref=e13451]
+                - button "Add to favorites" [ref=e13459]:
+                  - img [ref=e13460]
+              - heading "US| FLO COLLEGE PPV" [level=3] [ref=e13462]
+            - button "Add to favorites US| FLO RACING PPV" [ref=e13463] [cursor=pointer]:
+              - generic [ref=e13464]:
+                - img [ref=e13466]
+                - button "Add to favorites" [ref=e13474]:
+                  - img [ref=e13475]
+              - heading "US| FLO RACING PPV" [level=3] [ref=e13477]
+            - button "Add to favorites US| VICTORY+ PPV" [ref=e13478] [cursor=pointer]:
+              - generic [ref=e13479]:
+                - img [ref=e13481]
+                - button "Add to favorites" [ref=e13489]:
+                  - img [ref=e13490]
+              - heading "US| VICTORY+ PPV" [level=3] [ref=e13492]
+            - button "Add to favorites US| FITE TV PPV" [ref=e13493] [cursor=pointer]:
+              - generic [ref=e13494]:
+                - img [ref=e13496]
+                - button "Add to favorites" [ref=e13504]:
+                  - img [ref=e13505]
+              - heading "US| FITE TV PPV" [level=3] [ref=e13507]
+            - button "Add to favorites US| STAN PPV" [ref=e13508] [cursor=pointer]:
+              - generic [ref=e13509]:
+                - img [ref=e13511]
+                - button "Add to favorites" [ref=e13519]:
+                  - img [ref=e13520]
+              - heading "US| STAN PPV" [level=3] [ref=e13522]
+            - button "Add to favorites US| DIRTVISION PPV" [ref=e13523] [cursor=pointer]:
+              - generic [ref=e13524]:
+                - img [ref=e13526]
+                - button "Add to favorites" [ref=e13534]:
+                  - img [ref=e13535]
+              - heading "US| DIRTVISION PPV" [level=3] [ref=e13537]
+            - button "Add to favorites US| MLS NETWORK" [ref=e13538] [cursor=pointer]:
+              - generic [ref=e13539]:
+                - img [ref=e13541]
+                - button "Add to favorites" [ref=e13549]:
+                  - img [ref=e13550]
+              - heading "US| MLS NETWORK" [level=3] [ref=e13552]
+            - button "Add to favorites US| MLS PPV VIP" [ref=e13553] [cursor=pointer]:
+              - generic [ref=e13554]:
+                - img [ref=e13556]
+                - button "Add to favorites" [ref=e13564]:
+                  - img [ref=e13565]
+              - heading "US| MLS PPV VIP" [level=3] [ref=e13567]
+            - button "Add to favorites US| MLS PPV" [ref=e13568] [cursor=pointer]:
+              - generic [ref=e13569]:
+                - img [ref=e13571]
+                - button "Add to favorites" [ref=e13579]:
+                  - img [ref=e13580]
+              - heading "US| MLS PPV" [level=3] [ref=e13582]
+            - button "Add to favorites US| APPLE TV F1 PPV" [ref=e13583] [cursor=pointer]:
+              - generic [ref=e13584]:
+                - img [ref=e13586]
+                - button "Add to favorites" [ref=e13594]:
+                  - img [ref=e13595]
+              - heading "US| APPLE TV F1 PPV" [level=3] [ref=e13597]
+            - button "Add to favorites US| NETFLIX PPV" [ref=e13598] [cursor=pointer]:
+              - generic [ref=e13599]:
+                - img [ref=e13601]
+                - button "Add to favorites" [ref=e13609]:
+                  - img [ref=e13610]
+              - heading "US| NETFLIX PPV" [level=3] [ref=e13612]
+            - button "Add to favorites US| MAX PPV" [ref=e13613] [cursor=pointer]:
+              - generic [ref=e13614]:
+                - img [ref=e13616]
+                - button "Add to favorites" [ref=e13624]:
+                  - img [ref=e13625]
+              - heading "US| MAX PPV" [level=3] [ref=e13627]
+            - button "Add to favorites US| B/R MAX SPORTS PPV" [ref=e13628] [cursor=pointer]:
+              - generic [ref=e13629]:
+                - img [ref=e13631]
+                - button "Add to favorites" [ref=e13639]:
+                  - img [ref=e13640]
+              - heading "US| B/R MAX SPORTS PPV" [level=3] [ref=e13642]
+            - button "Add to favorites US| FLO NETWORK" [ref=e13643] [cursor=pointer]:
+              - generic [ref=e13644]:
+                - img [ref=e13646]
+                - button "Add to favorites" [ref=e13654]:
+                  - img [ref=e13655]
+              - heading "US| FLO NETWORK" [level=3] [ref=e13657]
+            - button "Add to favorites US| TENNIS CHANNEL PLUS" [ref=e13658] [cursor=pointer]:
+              - generic [ref=e13659]:
+                - img [ref=e13661]
+                - button "Add to favorites" [ref=e13669]:
+                  - img [ref=e13670]
+              - heading "US| TENNIS CHANNEL PLUS" [level=3] [ref=e13672]
+            - button "Add to favorites US| TENNIS PPV" [ref=e13673] [cursor=pointer]:
+              - generic [ref=e13674]:
+                - img [ref=e13676]
+                - button "Add to favorites" [ref=e13684]:
+                  - img [ref=e13685]
+              - heading "US| TENNIS PPV" [level=3] [ref=e13687]
+            - button "Add to favorites US| ABC NETWORK" [ref=e13688] [cursor=pointer]:
+              - generic [ref=e13689]:
+                - img [ref=e13691]
+                - button "Add to favorites" [ref=e13699]:
+                  - img [ref=e13700]
+              - heading "US| ABC NETWORK" [level=3] [ref=e13702]
+            - button "Add to favorites US| CBS NETWORK" [ref=e13703] [cursor=pointer]:
+              - generic [ref=e13704]:
+                - img [ref=e13706]
+                - button "Add to favorites" [ref=e13714]:
+                  - img [ref=e13715]
+              - heading "US| CBS NETWORK" [level=3] [ref=e13717]
+            - button "Add to favorites US| FOX NETWORK" [ref=e13718] [cursor=pointer]:
+              - generic [ref=e13719]:
+                - img [ref=e13721]
+                - button "Add to favorites" [ref=e13729]:
+                  - img [ref=e13730]
+              - heading "US| FOX NETWORK" [level=3] [ref=e13732]
+            - button "Add to favorites US| NBC NETWORK" [ref=e13733] [cursor=pointer]:
+              - generic [ref=e13734]:
+                - img [ref=e13736]
+                - button "Add to favorites" [ref=e13744]:
+                  - img [ref=e13745]
+              - heading "US| NBC NETWORK" [level=3] [ref=e13747]
+            - button "Add to favorites US| PBS NETWORK" [ref=e13748] [cursor=pointer]:
+              - generic [ref=e13749]:
+                - img [ref=e13751]
+                - button "Add to favorites" [ref=e13759]:
+                  - img [ref=e13760]
+              - heading "US| PBS NETWORK" [level=3] [ref=e13762]
+            - button "Add to favorites US| CW/MY NETWORK" [ref=e13763] [cursor=pointer]:
+              - generic [ref=e13764]:
+                - img [ref=e13766]
+                - button "Add to favorites" [ref=e13774]:
+                  - img [ref=e13775]
+              - heading "US| CW/MY NETWORK" [level=3] [ref=e13777]
+            - button "Add to favorites US| TELEMUNDO NETWORK" [ref=e13778] [cursor=pointer]:
+              - generic [ref=e13779]:
+                - img [ref=e13781]
+                - button "Add to favorites" [ref=e13789]:
+                  - img [ref=e13790]
+              - heading "US| TELEMUNDO NETWORK" [level=3] [ref=e13792]
+            - button "Add to favorites US| CINEMANIA HOLLYWOOD" [ref=e13793] [cursor=pointer]:
+              - generic [ref=e13794]:
+                - img [ref=e13796]
+                - button "Add to favorites" [ref=e13804]:
+                  - img [ref=e13805]
+              - heading "US| CINEMANIA HOLLYWOOD" [level=3] [ref=e13807]
+            - button "Add to favorites US| CINEMANIA TV SHOWS" [ref=e13808] [cursor=pointer]:
+              - generic [ref=e13809]:
+                - img [ref=e13811]
+                - button "Add to favorites" [ref=e13819]:
+                  - img [ref=e13820]
+              - heading "US| CINEMANIA TV SHOWS" [level=3] [ref=e13822]
+            - button "Add to favorites US| PARAMOUNT+" [ref=e13823] [cursor=pointer]:
+              - generic [ref=e13824]:
+                - img [ref=e13826]
+                - button "Add to favorites" [ref=e13834]:
+                  - img [ref=e13835]
+              - heading "US| PARAMOUNT+" [level=3] [ref=e13837]
+            - button "Add to favorites US| PEACOCK NETWORK" [ref=e13838] [cursor=pointer]:
+              - generic [ref=e13839]:
+                - img [ref=e13841]
+                - button "Add to favorites" [ref=e13849]:
+                  - img [ref=e13850]
+              - heading "US| PEACOCK NETWORK" [level=3] [ref=e13852]
+            - button "Add to favorites US| HBO MAX NETWORK" [ref=e13853] [cursor=pointer]:
+              - generic [ref=e13854]:
+                - img [ref=e13856]
+                - button "Add to favorites" [ref=e13864]:
+                  - img [ref=e13865]
+              - heading "US| HBO MAX NETWORK" [level=3] [ref=e13867]
+            - button "Add to favorites US| HULU NETWORK" [ref=e13868] [cursor=pointer]:
+              - generic [ref=e13869]:
+                - img [ref=e13871]
+                - button "Add to favorites" [ref=e13879]:
+                  - img [ref=e13880]
+              - heading "US| HULU NETWORK" [level=3] [ref=e13882]
+            - button "Add to favorites US| DISNEY+ NETWORK" [ref=e13883] [cursor=pointer]:
+              - generic [ref=e13884]:
+                - img [ref=e13886]
+                - button "Add to favorites" [ref=e13894]:
+                  - img [ref=e13895]
+              - heading "US| DISNEY+ NETWORK" [level=3] [ref=e13897]
+            - button "Add to favorites US| ESPN+ PPV VIP" [ref=e13898] [cursor=pointer]:
+              - generic [ref=e13899]:
+                - img [ref=e13901]
+                - button "Add to favorites" [ref=e13909]:
+                  - img [ref=e13910]
+              - heading "US| ESPN+ PPV VIP" [level=3] [ref=e13912]
+            - button "Add to favorites US| ESPN PLUS" [ref=e13913] [cursor=pointer]:
+              - generic [ref=e13914]:
+                - img [ref=e13916]
+                - button "Add to favorites" [ref=e13924]:
+                  - img [ref=e13925]
+              - heading "US| ESPN PLUS" [level=3] [ref=e13927]
+            - button "Add to favorites US| ESPN PLAY" [ref=e13928] [cursor=pointer]:
+              - generic [ref=e13929]:
+                - img [ref=e13931]
+                - button "Add to favorites" [ref=e13939]:
+                  - img [ref=e13940]
+              - heading "US| ESPN PLAY" [level=3] [ref=e13942]
+            - button "Add to favorites US| VIX+ DEPORTES" [ref=e13943] [cursor=pointer]:
+              - generic [ref=e13944]:
+                - img [ref=e13946]
+                - button "Add to favorites" [ref=e13954]:
+                  - img [ref=e13955]
+              - heading "US| VIX+ DEPORTES" [level=3] [ref=e13957]
+            - button "Add to favorites NA| HOCKEY LEAGUE" [ref=e13958] [cursor=pointer]:
+              - generic [ref=e13959]:
+                - img [ref=e13961]
+                - button "Add to favorites" [ref=e13969]:
+                  - img [ref=e13970]
+              - heading "NA| HOCKEY LEAGUE" [level=3] [ref=e13972]
+            - button "Add to favorites CA| OHL PPV" [ref=e13973] [cursor=pointer]:
+              - generic [ref=e13974]:
+                - img [ref=e13976]
+                - button "Add to favorites" [ref=e13984]:
+                  - img [ref=e13985]
+              - heading "CA| OHL PPV" [level=3] [ref=e13987]
+            - button "Add to favorites NA| PPV & LIVE EVENTS" [ref=e13988] [cursor=pointer]:
+              - generic [ref=e13989]:
+                - img [ref=e13991]
+                - button "Add to favorites" [ref=e13999]:
+                  - img [ref=e14000]
+              - heading "NA| PPV & LIVE EVENTS" [level=3] [ref=e14002]
+            - button "Add to favorites US| NETFLIX ON AIR ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [ref=e14003] [cursor=pointer]:
+              - generic [ref=e14004]:
+                - img [ref=e14006]
+                - button "Add to favorites" [ref=e14014]:
+                  - img [ref=e14015]
+              - heading "US| NETFLIX ON AIR ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [level=3] [ref=e14017]
+            - button "Add to favorites US| PLUTO TV" [ref=e14018] [cursor=pointer]:
+              - generic [ref=e14019]:
+                - img [ref=e14021]
+                - button "Add to favorites" [ref=e14029]:
+                  - img [ref=e14030]
+              - heading "US| PLUTO TV" [level=3] [ref=e14032]
+            - button "Add to favorites 24/7 DISNEY+ ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [ref=e14033] [cursor=pointer]:
+              - generic [ref=e14034]:
+                - img [ref=e14036]
+                - button "Add to favorites" [ref=e14044]:
+                  - img [ref=e14045]
+              - heading "24/7 DISNEY+ ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [level=3] [ref=e14047]
+            - button "Add to favorites 24/7 PRIME VIDEO ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [ref=e14048] [cursor=pointer]:
+              - generic [ref=e14049]:
+                - img [ref=e14051]
+                - button "Add to favorites" [ref=e14059]:
+                  - img [ref=e14060]
+              - heading "24/7 PRIME VIDEO ᴿᴬᵂ ⁶⁰ᶠᵖˢ" [level=3] [ref=e14062]
+            - button "Add to favorites 24/7 MOVIES & SERIES" [ref=e14063] [cursor=pointer]:
+              - generic [ref=e14064]:
+                - img [ref=e14066]
+                - button "Add to favorites" [ref=e14074]:
+                  - img [ref=e14075]
+              - heading "24/7 MOVIES & SERIES" [level=3] [ref=e14077]
+            - button "Add to favorites 24/7 ONEPLAY" [ref=e14078] [cursor=pointer]:
+              - generic [ref=e14079]:
+                - img [ref=e14081]
+                - button "Add to favorites" [ref=e14089]:
+                  - img [ref=e14090]
+              - heading "24/7 ONEPLAY" [level=3] [ref=e14092]
+            - button "Add to favorites 24/7 DRAMA VIP" [ref=e14093] [cursor=pointer]:
+              - generic [ref=e14094]:
+                - img [ref=e14096]
+                - button "Add to favorites" [ref=e14104]:
+                  - img [ref=e14105]
+              - heading "24/7 DRAMA VIP" [level=3] [ref=e14107]
+            - button "Add to favorites 24/7 SHOWS VIP" [ref=e14108] [cursor=pointer]:
+              - generic [ref=e14109]:
+                - img [ref=e14111]
+                - button "Add to favorites" [ref=e14119]:
+                  - img [ref=e14120]
+              - heading "24/7 SHOWS VIP" [level=3] [ref=e14122]
+            - button "Add to favorites 24/7 CLASSIC SHOWS VIP" [ref=e14123] [cursor=pointer]:
+              - generic [ref=e14124]:
+                - img [ref=e14126]
+                - button "Add to favorites" [ref=e14134]:
+                  - img [ref=e14135]
+              - heading "24/7 CLASSIC SHOWS VIP" [level=3] [ref=e14137]
+            - button "Add to favorites 24/7 REALITY VIP" [ref=e14138] [cursor=pointer]:
+              - generic [ref=e14139]:
+                - img [ref=e14141]
+                - button "Add to favorites" [ref=e14149]:
+                  - img [ref=e14150]
+              - heading "24/7 REALITY VIP" [level=3] [ref=e14152]
+            - button "Add to favorites 24/7 CARTOON VIP" [ref=e14153] [cursor=pointer]:
+              - generic [ref=e14154]:
+                - img [ref=e14156]
+                - button "Add to favorites" [ref=e14164]:
+                  - img [ref=e14165]
+              - heading "24/7 CARTOON VIP" [level=3] [ref=e14167]
+            - button "Add to favorites 24/7 COMEDY VIP" [ref=e14168] [cursor=pointer]:
+              - generic [ref=e14169]:
+                - img [ref=e14171]
+                - button "Add to favorites" [ref=e14179]:
+                  - img [ref=e14180]
+              - heading "24/7 COMEDY VIP" [level=3] [ref=e14182]
+            - button "Add to favorites 24/7 KIDS/FAMILY VIP" [ref=e14183] [cursor=pointer]:
+              - generic [ref=e14184]:
+                - img [ref=e14186]
+                - button "Add to favorites" [ref=e14194]:
+                  - img [ref=e14195]
+              - heading "24/7 KIDS/FAMILY VIP" [level=3] [ref=e14197]
+            - button "Add to favorites 24/7 CRIME VIP" [ref=e14198] [cursor=pointer]:
+              - generic [ref=e14199]:
+                - img [ref=e14201]
+                - button "Add to favorites" [ref=e14209]:
+                  - img [ref=e14210]
+              - heading "24/7 CRIME VIP" [level=3] [ref=e14212]
+            - button "Add to favorites 24/7 ACTION & ADVENTURE VIP" [ref=e14213] [cursor=pointer]:
+              - generic [ref=e14214]:
+                - img [ref=e14216]
+                - button "Add to favorites" [ref=e14224]:
+                  - img [ref=e14225]
+              - heading "24/7 ACTION & ADVENTURE VIP" [level=3] [ref=e14227]
+            - button "Add to favorites 24/7 MOVIES/ACTORS VIP" [ref=e14228] [cursor=pointer]:
+              - generic [ref=e14229]:
+                - img [ref=e14231]
+                - button "Add to favorites" [ref=e14239]:
+                  - img [ref=e14240]
+              - heading "24/7 MOVIES/ACTORS VIP" [level=3] [ref=e14242]
+  - region "Toast notifications"

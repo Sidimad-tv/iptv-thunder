@@ -1,0 +1,15 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - img "IPTV Thunder" [ref=e8]
+      - generic [ref=e9]:
+        - button "Minimize window" [ref=e10]:
+          - img [ref=e11]
+        - button "Maximize window" [ref=e16]:
+          - img [ref=e17]
+        - button "Close window" [ref=e22]:
+          - img [ref=e23]
+    - generic [ref=e12161]:
+      - generic [ref=e12162]: PT| SPORT TV 1 HD
+      - button "✕" [ref=e12163]
+  - region "Toast notifications"

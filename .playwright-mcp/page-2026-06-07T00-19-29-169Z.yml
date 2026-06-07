@@ -1,0 +1,7 @@
+- alert [ref=e12436]:
+  - generic [ref=e12437]:
+    - heading "Something went wrong" [level=1] [ref=e12438]
+    - paragraph [ref=e12439]: "error loading dynamically imported module: https://thunder-sidimad-tv.vercel.app/assets/MovieCategoriesList-rIFEzNNv.js"
+    - generic [ref=e12440]:
+      - button "Try again" [ref=e12441]: Try Again
+      - button "Reload the page" [ref=e12442]: Reload Page
