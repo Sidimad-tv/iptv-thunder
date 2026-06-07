@@ -47,7 +47,7 @@ export const pl = {
   reset: 'Resetuj',
 
   version: 'Wersja',
-  appDescription: 'Nowoczesna aplikacja IPTV stworzona z użyciem Tauri + React',
+  appDescription: 'S!d!m@dtv-STB — Nowoczesny emulator STB i klient IPTV oparty na Tauri + React + MPV. Obsługuje portale Stalker Middleware dla telewizji na żywo, filmów i seriali.',
 
   noFavoriteMovies: 'Brak ulubionych filmów',
   addFavoriteMoviesHint: 'Dodaj filmy do ulubionych klikając ❤️ przy filmie',

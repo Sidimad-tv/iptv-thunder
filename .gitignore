@@ -9,3 +9,4 @@ dist-cache/
 .vercel/*
 !.vercel/project.json
 .vercel
+src-tauri/target/

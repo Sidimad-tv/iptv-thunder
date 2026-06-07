@@ -516,13 +516,15 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
 
                 {activeTab === 'about' && (
                   <div className="flex flex-col items-center justify-center h-full py-12 text-center" data-tv-tab="about">
-                    <div className="w-24 h-24 bg-gradient-to-br from-green-700 to-green-800 rounded-3xl flex items-center justify-center text-6xl mb-6 shadow-xl">
-                      📺
-                    </div>
-                    <h3 className="text-3xl font-bold dark:text-white text-slate-900 mb-1">IPTV Thunder</h3>
-                    <p className="dark:text-slate-400 text-slate-600 mb-8">{t('version')} {version || '—'}</p>
+                    <img
+                      src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
+                      alt="S!d!m@dtv-STB"
+                      className="w-24 h-24 object-contain mb-4"
+                    />
+                    <h3 className="text-3xl font-bold text-green-500 mb-1 tracking-wider">S!d!m@dtv-STB</h3>
+                    <p className="dark:text-slate-400 text-slate-600 mb-6">{t('version')} {version || '—'}</p>
                     
-                    <div className="text-sm dark:text-slate-500 text-slate-500 max-w-xs">
+                    <div className="text-sm dark:text-slate-500 text-slate-500 max-w-xs leading-relaxed">
                       {t('appDescription')}
                     </div>
                   </div>

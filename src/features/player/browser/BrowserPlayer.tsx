@@ -121,7 +121,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
           }
         });
       } else if (isMpd) {
-        const dashjs = (await import('dashjs')).default;
+        const dashjs = (await import('dashjs')) as any;
         if (!dashjs.supportsMediaSource) {
           loadWithNativeVideo(streamUrl);
           return;
@@ -216,14 +216,20 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
             </div>
           </div>
         )}
-        {!isPlaying && !error && loadAttempted && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="text-gray-400">Loading...</p>
-          </div>
-        )}
-        {!isPlaying && !error && !loadAttempted && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full" />
+        {!isPlaying && !error && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <img
+              src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
+              alt="S!d!m@dtv-STB"
+              className="w-16 h-16 object-contain"
+            />
+            <p className="text-green-500 font-bold text-base tracking-wider">S!d!m@dtv-STB</p>
+            {!loadAttempted && (
+              <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full mt-1" />
+            )}
+            {loadAttempted && (
+              <p className="text-gray-400 text-sm mt-1">Loading...</p>
+            )}
           </div>
         )}
       </div>

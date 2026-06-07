@@ -211,13 +211,13 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
   return (
     <main
       className={`fixed z-50 flex items-center justify-center ${controls.isFullscreen ? 'inset-0' : 'left-0 right-0 bottom-0'}`}
-      style={{ background: 'transparent', top: controls.isFullscreen ? 0 : 40 }}
+      style={{ background: 'black', top: controls.isFullscreen ? 0 : 40 }}
       aria-labelledby="player-title"
       role="application"
     >
       <div
         className="relative w-full h-full flex flex-col"
-        style={{ background: 'transparent', cursor: controls.isFullscreen && !controls.showUi ? 'none' : 'auto' }}
+        style={{ background: 'black', cursor: controls.isFullscreen && !controls.showUi ? 'none' : 'auto' }}
         onMouseMove={controls.handleMouseMove}
       >
         {!controls.isPip ? (
@@ -248,15 +248,23 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
           </button>
         )}
 
-        <div className="flex-1 relative overflow-hidden" style={{ background: 'transparent' }}>
+        <div className="flex-1 relative overflow-hidden" style={{ background: 'black' }}>
           {mpv.isLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3"
-              style={{ background: 'rgba(0,0,0,0.6)' }}>
-              <svg className="animate-spin" style={{ width: 36, height: 36 }} viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#333" strokeWidth="2" />
-                <path d="M12 2 A10 10 0 0 1 22 12" stroke="#1D9E75" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <p className="text-gray-300 text-sm">{mpv.statusMsg}</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4"
+              style={{ background: 'black' }}>
+              <img
+                src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
+                alt="S!d!m@dtv-STB"
+                className="w-20 h-20 object-contain"
+              />
+              <p className="text-green-500 font-bold text-lg tracking-wider">S!d!m@dtv-STB</p>
+              <div className="flex items-center gap-2 mt-1">
+                <svg className="animate-spin" style={{ width: 18, height: 18 }} viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="#333" strokeWidth="2" />
+                  <path d="M12 2 A10 10 0 0 1 22 12" stroke="#1D9E75" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <p className="text-gray-300 text-sm">{mpv.statusMsg}</p>
+              </div>
             </div>
           )}
 

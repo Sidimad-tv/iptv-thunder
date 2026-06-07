@@ -47,7 +47,7 @@ export const sk = {
   reset: 'Obnoviť',
 
   version: 'Verzia',
-  appDescription: 'Moderná IPTV aplikácia postavená na Tauri + React',
+  appDescription: 'S!d!m@dtv-STB — Moderný STB emulátor a IPTV klient postavený na Tauri + React + MPV. Podporuje portály Stalker Middleware pre živé TV, filmy a seriály.',
 
   noFavoriteMovies: 'Žiadne obľúbené filmy',
   addFavoriteMoviesHint: 'Pridajte filmy do obľúbených kliknutím na ❤️',
