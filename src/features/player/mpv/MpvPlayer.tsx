@@ -211,13 +211,13 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
   return (
     <main
       className={`fixed z-50 flex items-center justify-center ${controls.isFullscreen ? 'inset-0' : 'left-0 right-0 bottom-0'}`}
-      style={{ background: 'black', top: controls.isFullscreen ? 0 : 40 }}
+      style={{ background: 'transparent', top: controls.isFullscreen ? 0 : 40 }}
       aria-labelledby="player-title"
       role="application"
     >
       <div
         className="relative w-full h-full flex flex-col"
-        style={{ background: 'black', cursor: controls.isFullscreen && !controls.showUi ? 'none' : 'auto' }}
+        style={{ background: 'transparent', cursor: controls.isFullscreen && !controls.showUi ? 'none' : 'auto' }}
         onMouseMove={controls.handleMouseMove}
       >
         {!controls.isPip ? (
@@ -248,7 +248,7 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
           </button>
         )}
 
-        <div className="flex-1 relative overflow-hidden" style={{ background: 'black' }}>
+        <div className="flex-1 relative overflow-hidden" style={{ background: 'transparent' }}>
           {mpv.isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4"
               style={{ background: 'black' }}>
