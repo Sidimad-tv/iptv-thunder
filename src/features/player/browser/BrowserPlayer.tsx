@@ -56,8 +56,8 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
     const video = videoRef.current;
     if (!video) return;
 
-    const isM3u8 = streamUrl.includes('.m3u8');
-    const isTs = streamUrl.includes('.ts') || streamUrl.includes('extension=ts') || streamUrl.includes('extension=mpegts');
+    const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('extension%3Dm3u8');
+    const isTs = /extension(=|%3D)(ts|mpegts|m2ts|flv)/i.test(streamUrl) || /\.(ts|mpegts|m2ts|flv)(\?|$|&)/i.test(streamUrl) || streamUrl.includes('video/mp2t');
 
     const handleError = (e: any, message: string) => {
       console.error(`[Player] ${message} (Attempt ${attempt + 1}/${MAX_RETRIES}):`, e);
@@ -119,7 +119,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
           }
         });
       } else if (isTs) {
-        const mpegts = (await import('mpegts.js')) as any;
+        const mpegts = (await import('mpegts.js')).default as any;
         if (!mpegts.isSupported || !mpegts.isSupported()) {
           loadWithNativeVideo(streamUrl);
           return;

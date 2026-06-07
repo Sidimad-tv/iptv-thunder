@@ -85,7 +85,7 @@ export const usePlaybackManager = ({
           signal: controller.signal,
           genreId: channel.tv_genre_id?.toString() || (channel as any).genreId?.toString()
         }),
-        staleTime: 2 * 60 * 1000, // Use cache for 2 minutes (allows prefetch to work)
+        staleTime: 0, // Always fetch fresh stream URL to get valid token
       });
 
       // Check if request was aborted before continuing
@@ -290,7 +290,7 @@ export const usePlaybackManager = ({
       const url = await queryClient.fetchQuery({
         queryKey: ['series-stream', String(episode.id)],
         queryFn: () => fetchStreamUrl(episode, controller.signal),
-        staleTime: 5 * 60 * 1000, // 5 minutes - allows prefetch to work
+        staleTime: 0, // Always fetch fresh stream URL to get valid token
       });
 
       if (controller.signal.aborted) return;

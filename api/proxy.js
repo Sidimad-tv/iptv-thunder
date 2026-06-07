@@ -37,6 +37,14 @@ export default async function handler(req, res) {
   if (_auth) headers['Authorization'] = _auth;
   if (_cookie) headers['Cookie'] = _cookie;
 
+  // Set Referer to the target URL's origin (some stream servers check this)
+  try {
+    const parsedUrl = new URL(url);
+    headers['Referer'] = parsedUrl.origin + '/';
+  } catch (e) {
+    // ignore invalid URLs
+  }
+
   try {
     const response = await fetch(targetUrl, {
       method: req.method || 'GET',
