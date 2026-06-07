@@ -56,8 +56,9 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
     const video = videoRef.current;
     if (!video) return;
 
-    const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('extension%3Dm3u8');
-    const isTs = /extension(=|%3D)(ts|mpegts|m2ts|flv)/i.test(streamUrl) || /\.(ts|mpegts|m2ts|flv)(\?|$|&)/i.test(streamUrl) || streamUrl.includes('video/mp2t');
+    const originalUrl = url;
+    const isM3u8 = originalUrl.includes('.m3u8') || originalUrl.includes('extension%3Dm3u8');
+    const isTs = /extension(=|%3D)(ts|mpegts|m2ts|flv)/i.test(originalUrl) || /\.(ts|mpegts|m2ts|flv)(\?|$|&)/i.test(originalUrl) || originalUrl.includes('video/mp2t');
 
     const handleError = (e: any, message: string) => {
       console.error(`[Player] ${message} (Attempt ${attempt + 1}/${MAX_RETRIES}):`, e);
