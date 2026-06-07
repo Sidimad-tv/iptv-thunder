@@ -1,0 +1,4 @@
+# LFS for mpv wrapper binaries
+src-tauri/lib/libmpv-wrapper.dll filter=lfs diff=lfs merge=lfs -text
+src-tauri/lib/libmpv-wrapper.dylib filter=lfs diff=lfs merge=lfs -text
+src-tauri/lib/libmpv-wrapper.so filter=lfs diff=lfs merge=lfs -text
