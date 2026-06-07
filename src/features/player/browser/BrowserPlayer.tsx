@@ -58,6 +58,7 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
 
     const originalUrl = url;
     const isM3u8 = originalUrl.includes('.m3u8') || originalUrl.includes('extension%3Dm3u8');
+    const isMpd = originalUrl.includes('.mpd') || originalUrl.includes('extension%3Dmpd');
     const isTs = /extension(=|%3D)(ts|mpegts|m2ts|flv)/i.test(originalUrl) || /\.(ts|mpegts|m2ts|flv)(\?|$|&)/i.test(originalUrl) || originalUrl.includes('video/mp2t');
 
     const handleError = (e: any, message: string) => {
@@ -118,6 +119,21 @@ const BrowserPlayerComponent: React.FC<BrowserPlayerProps> = ({
             // Non-fatal, hls.js might recover or try again
             console.warn('[Player] HLS non-fatal error:', data.details);
           }
+        });
+      } else if (isMpd) {
+        const dashjs = (await import('dashjs')).default;
+        if (!dashjs.supportsMediaSource) {
+          loadWithNativeVideo(streamUrl);
+          return;
+        }
+        const player = dashjs.MediaPlayer().create();
+        player.initialize(video, streamUrl, !isVod);
+        player.on('error', (e: any) => {
+          player.reset();
+          handleError(e, 'DASH playback error.');
+        });
+        player.on('playback_started', () => {
+          setIsPlaying(true);
         });
       } else if (isTs) {
         const mpegts = (await import('mpegts.js')).default as any;
