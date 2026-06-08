@@ -105,7 +105,11 @@ export const useM3uStore = create<M3uState>()(
     storage: tauriStorage,
     partialize: (state) => ({
       ...state,
-      accounts: state.accounts.map(({ channels: _ch, ...rest }) => rest),
+      accounts: state.accounts.map((acct) => {
+        if (acct.sourceType === 'file') return acct;
+        const { channels: _ch, ...rest } = acct;
+        return rest;
+      }),
     }),
   }
   )
