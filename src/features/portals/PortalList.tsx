@@ -10,7 +10,11 @@ import { PortalTest } from './PortalTest';
 import { fetchLatestBlogPortals, fetchPortalsFromUrl, getSavedImportUrls, addSavedImportUrl, removeSavedImportUrl, getBlogSources, addBlogSource, removeBlogSource, exportBlogSources, importBlogSources, BlogPortalEntry, DEFAULT_BLOG_POSTS } from '@/utils/portalImporter';
 import { invoke } from '@tauri-apps/api/core';
 import { useM3uStore } from '@/store/m3u.store';
-import { CheckCircle, Circle, Plus, Target, RefreshCw, Edit, Trash2, X, Globe, Monitor, Download, Upload, History, FileText, Trash, Save } from 'lucide-react';
+import { CheckCircle, Circle, Plus, Target, RefreshCw, Edit, Trash2, X, Globe, Monitor, Download, Upload, History, FileText, Trash, Save, Play } from 'lucide-react';
+import { M3uChannelList } from '@/features/m3u/M3uChannelList';
+import { M3uTest } from '@/features/m3u/M3uTest';
+import { M3uForm } from '@/features/m3u/M3uForm';
+import { M3uAccount } from '@/features/m3u/m3u.types';
 
 export const PortalList: React.FC = () => {
   const { t, currentLang } = useTranslation();
@@ -30,6 +34,11 @@ export const PortalList: React.FC = () => {
   const [showAddBlogSource, setShowAddBlogSource] = useState(false);
   const [blogSourceName, setBlogSourceName] = useState('');
   const [blogSourceUrl, setBlogSourceUrl] = useState('');
+  const [viewingM3u, setViewingM3u] = useState<M3uAccount | null>(null);
+  const [testingM3u, setTestingM3u] = useState<M3uAccount | null>(null);
+  const [editingM3u, setEditingM3u] = useState<M3uAccount | null>(null);
+  const [deletingM3u, setDeletingM3u] = useState<M3uAccount | null>(null);
+  const [showM3uForm, setShowM3uForm] = useState(false);
   const blogFileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +50,7 @@ export const PortalList: React.FC = () => {
     addPortal,
   } = usePortalsStore();
 
+  const { accounts: m3uAccounts, activeM3uId, deleteM3u, setActiveM3u } = useM3uStore();
   const addM3u = useM3uStore(s => s.addM3u);
 
   const testingPortalData = usePortalsStore(s =>
@@ -223,7 +233,7 @@ export const PortalList: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `blog-sources-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `S!d!m@dtv-Stb-Blog-Sources-${new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '')}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -283,7 +293,7 @@ export const PortalList: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `portals-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `S!d!m@dtv-Stb-Portals-${new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '')}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -791,6 +801,149 @@ export const PortalList: React.FC = () => {
         ))}
       </div>
 
+      {/* M3U Accounts Section */}
+      {m3uAccounts.length > 0 && (
+        <div className="max-w-7xl mx-auto mt-12 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">M3U Playlists</h2>
+              <p className="dark:text-slate-400 text-slate-600 text-sm">{m3uAccounts.length} playlist(s)</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {m3uAccounts.map((acct, idx) => (
+              <div
+                key={acct.id}
+                data-tv-id={`m3u-card-${acct.id}`}
+                data-tv-focusable
+                data-tv-group="m3u-cards"
+                data-tv-index={idx}
+                tabIndex={0}
+                className={`group relative backdrop-blur-xl rounded-2xl md:rounded-3xl p-4 md:p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 cursor-pointer dark:border border-white/10 border-gray-300/20 ${
+                  acct.id === activeM3uId
+                    ? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-400/30 shadow-xl shadow-cyan-500/20'
+                    : 'dark:bg-slate-800/50 bg-white/50 hover:dark:bg-slate-700/60 hover:bg-gray-200/60 dark:border-slate-700/50 border-gray-300/50'
+                }`}
+              >
+                <div className="flex items-start gap-3 mb-4 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    acct.id === activeM3uId
+                      ? 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-400/20'
+                      : 'dark:bg-slate-700/50 bg-gray-100/50'
+                  }`}>
+                    {acct.id === activeM3uId
+                      ? <CheckCircle className="w-5 h-5 text-emerald-400" />
+                      : <Circle className="w-5 h-5 text-slate-400" />
+                    }
+                  </div>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <h3 className="font-bold text-base dark:text-white text-slate-900 truncate">{acct.name}</h3>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <span className="inline-flex items-center gap-1 text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full">
+                        {acct.sourceType === 'url' ? 'M3U URL' : acct.sourceType === 'xtream' ? 'Xtream' : 'Local File'}
+                      </span>
+                      {acct.id === activeM3uId && (
+                        <span className="inline-flex items-center text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full animate-pulse">Active</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {acct.url && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-mono dark:text-slate-400 text-slate-500 truncate">{acct.url}</span>
+                  </div>
+                )}
+                {acct.serverUrl && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-mono dark:text-slate-400 text-slate-500 truncate">{acct.serverUrl}</span>
+                  </div>
+                )}
+                {(acct.channelCount ?? 0) > 0 && (
+                  <p className="text-xs dark:text-slate-500 text-slate-500">{acct.channelCount} channels</p>
+                )}
+
+                {acct.tags && acct.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {acct.tags.map((tag, i) => (
+                      <span key={i} className="text-xs dark:bg-slate-700/50 bg-gray-100/50 dark:text-slate-400 text-slate-500 px-2 py-0.5 rounded-full">{tag}</span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-4 pt-3 dark:border-t border-slate-700/50 border-t-gray-300/50 flex gap-2 justify-end">
+                  {acct.id !== activeM3uId ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveM3u(acct.id); }}
+                      className="p-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg transition-colors" title="Set active"
+                    >
+                      <Target className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setViewingM3u(acct); }}
+                      className="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors" title="View channels"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setTestingM3u(acct); }}
+                    className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" title="Test"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingM3u(acct); setShowM3uForm(true); }}
+                    className="p-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg transition-colors" title="Edit"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeletingM3u(acct); }}
+                    className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors" title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* M3U Modal - View Channels */}
+      {viewingM3u && (
+        <M3uChannelList account={viewingM3u} onClose={() => setViewingM3u(null)} />
+      )}
+
+      {/* M3U Modal - Test */}
+      {testingM3u && (
+        <M3uTest account={testingM3u} onClose={() => setTestingM3u(null)} />
+      )}
+
+      {/* M3U Modal - Edit/Add Form */}
+      {showM3uForm && (
+        <M3uForm account={editingM3u} onClose={() => { setShowM3uForm(false); setEditingM3u(null); }} />
+      )}
+
+      {/* M3U Delete Confirmation */}
+      {deletingM3u && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-md border border-slate-700/50 p-6">
+            <h2 className="text-lg font-bold text-white mb-2">Delete M3U Playlist</h2>
+            <p className="text-sm text-slate-300 mb-2">Are you sure you want to delete <span className="font-semibold text-white">"{deletingM3u.name}"</span>?</p>
+            <p className="text-xs text-slate-500 mb-6">This action cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeletingM3u(null)} className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 transition-colors text-sm">Cancel</button>
+              <button onClick={() => { deleteM3u(deletingM3u.id); setDeletingM3u(null); }} className="px-6 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg font-semibold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-2 text-sm">
+                <Trash2 className="w-4 h-4" /> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Help text */}
       {portals.length > 0 && (
         <div className="max-w-7xl mx-auto mt-8 text-center text-sm dark:text-slate-500 text-slate-500">
@@ -799,7 +952,7 @@ export const PortalList: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {portals.length === 0 && (
+      {portals.length === 0 && m3uAccounts.length === 0 && (
         <div className="max-w-2xl mx-auto text-center py-12 md:py-20">
           <div className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-2xl md:rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center backdrop-blur-sm border border-emerald-400/20 shadow-xl shadow-emerald-500/10">
             <Globe className="w-8 h-8 md:w-12 md:h-12 text-emerald-400" />

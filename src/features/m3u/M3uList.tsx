@@ -50,7 +50,7 @@ export const M3uList: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `m3u-accounts-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `S!d!m@dtv-Stb-M3U-${new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '')}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -244,7 +244,7 @@ export const M3uList: React.FC = () => {
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = 'blog-sources.json';
+                          a.download = `S!d!m@dtv-Stb-Blog-Sources-${new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '')}.json`;
                           document.body.appendChild(a); a.click();
                           document.body.removeChild(a);
                           URL.revokeObjectURL(url);

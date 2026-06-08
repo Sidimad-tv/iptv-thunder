@@ -246,7 +246,7 @@ export const M3uForm: React.FC<M3uFormProps> = ({ account, onClose }) => {
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = `m3u-urls-${new Date().toISOString().slice(0, 10)}.json`;
+                      a.download = `S!d!m@dtv-Stb-M3U-URLs-${new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '')}.json`;
                       document.body.appendChild(a);
                       a.click();
                       document.body.removeChild(a);

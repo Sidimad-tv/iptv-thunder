@@ -103,6 +103,10 @@ export const useM3uStore = create<M3uState>()(
   {
     name: 'm3u-accounts',
     storage: tauriStorage,
+    partialize: (state) => ({
+      ...state,
+      accounts: state.accounts.map(({ channels: _ch, ...rest }) => rest),
+    }),
   }
   )
 );
