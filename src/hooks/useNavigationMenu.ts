@@ -29,6 +29,18 @@ export const useNavigationMenu = ({
       onClick: () => navigate({ type: 'portals' }),
     },
     {
+      id: 'm3u',
+      label: 'M3U Playlists',
+      icon: '📺',
+      active: activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series',
+      onClick: () => navigate({ type: 'm3u' }),
+      subItems: m3uId ? [
+        { id: 'm3u-channels', label: t('channels'), onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-channels' },
+        { id: 'm3u-movies', label: t('movies'), onClick: () => navigate({ type: 'm3u-movies' }), active: activeView === 'm3u-movies' },
+        { id: 'm3u-series', label: t('series'), onClick: () => navigate({ type: 'm3u-series' }), active: activeView === 'm3u-series' },
+      ] : undefined,
+    },
+    {
       id: 'for-you',
       label: t('forYou') || 'Dla Ciebie',
       icon: '⭐',
@@ -116,18 +128,6 @@ export const useNavigationMenu = ({
           active: activeView === 'favorite-series',
         },
       ],
-    },
-    {
-      id: 'm3u',
-      label: 'M3U Playlists',
-      icon: '📺',
-      active: activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series',
-      onClick: () => navigate({ type: 'm3u' }),
-      subItems: m3uId ? [
-        { id: 'm3u-channels', label: t('channels'), onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-channels' },
-        { id: 'm3u-movies', label: t('movies'), onClick: () => navigate({ type: 'm3u-movies' }), active: activeView === 'm3u-movies' },
-        { id: 'm3u-series', label: t('series'), onClick: () => navigate({ type: 'm3u-series' }), active: activeView === 'm3u-series' },
-      ] : undefined,
     },
     {
       id: 'scb',

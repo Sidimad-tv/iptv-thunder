@@ -470,6 +470,16 @@ export const PortalList: React.FC = () => {
               <span className="relative">{t('addPortal')}</span>
             </button>
             <button
+              onClick={() => setShowM3uForm(true)}
+              data-tv-focusable
+              data-tv-id="add-m3u-btn"
+              className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 md:gap-3 overflow-hidden text-sm md:text-base"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Plus className="relative w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="relative">M3U Playlist</span>
+            </button>
+            <button
               onClick={handleExport}
               className="group relative px-3 md:px-4 py-3 md:py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-1 md:gap-2 overflow-hidden text-sm md:text-base"
               title="Export all portals as JSON"
@@ -802,15 +812,22 @@ export const PortalList: React.FC = () => {
       </div>
 
       {/* M3U Accounts Section */}
-      {m3uAccounts.length > 0 && (
-        <div className="max-w-7xl mx-auto mt-12 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">M3U Playlists</h2>
-              <p className="dark:text-slate-400 text-slate-600 text-sm">{m3uAccounts.length} playlist(s)</p>
-            </div>
+      <div className="max-w-7xl mx-auto mt-12 mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">M3U Playlists</h2>
+            <p className="dark:text-slate-400 text-slate-600 text-sm">{m3uAccounts.length} playlist(s)</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          <button
+            onClick={() => setShowM3uForm(true)}
+            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add M3U Playlist</span>
+          </button>
+        </div>
+        {m3uAccounts.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {m3uAccounts.map((acct, idx) => (
               <div
                 key={acct.id}
@@ -909,8 +926,16 @@ export const PortalList: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center border border-orange-400/20">
+              <FileText className="w-6 h-6 text-orange-400" />
+            </div>
+            <p className="text-sm dark:text-slate-400 text-slate-600">No M3U playlists yet</p>
+            <p className="text-xs dark:text-slate-500 text-slate-500 mt-1">Click "Add M3U Playlist" above to add one</p>
+          </div>
+        )}
+      </div>
 
       {/* M3U Modal - View Channels */}
       {viewingM3u && (
