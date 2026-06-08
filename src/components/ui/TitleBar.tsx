@@ -32,9 +32,9 @@ export const TitleBar = () => {
       data-tauri-drag-region
       className="flex items-center justify-between w-full px-4 py-1.5 dark:bg-slate-900/80 bg-white/80 backdrop-blur-md border-b dark:border-slate-700/30 border-gray-200/30 select-none relative z-50"
     >
-      <div className="flex items-center gap-2">
-        <img src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png" alt="S!d!m@dtv-STB" className="h-6 w-auto" />
-        <span className="text-green-500 font-bold text-sm tracking-wider ml-2">S!d!m@dtv-STB</span>
+      <div className="flex items-center gap-3">
+        <img src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png" alt="S!d!m@dtv-STB" className="h-10 w-auto" />
+        <span className="text-green-500 font-bold text-base tracking-wider">S!d!m@dtv-STB</span>
       </div>
 
       <div className="flex items-center gap-1" data-tauri-drag-region="false">
@@ -50,7 +50,7 @@ export const TitleBar = () => {
         <button
           onClick={handleMaximize}
           className="w-10 h-8 flex items-center justify-center rounded hover:bg-slate-700/30 dark:hover:bg-slate-700/50 transition-colors group"
-          title={isMaximized ? "Przywróć" : "Maksymalizuj"}
+          title={isMaximized ? "Restore" : "Maximize"}
           aria-label={isMaximized ? t('restoreWindow') : t('maximizeWindow')}
           type="button"
         >

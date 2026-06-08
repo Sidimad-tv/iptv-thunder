@@ -14,13 +14,6 @@ jest.mock('@/hooks/useSettings', () => ({
 const { useTranslation } = jest.requireActual('../useTranslation');
 
 describe('translations', () => {
-  it('should have Polish translations', () => {
-    expect(translations.pl).toBeDefined();
-    expect(translations.pl.channels).toBe('Kanały TV');
-    expect(translations.pl.movies).toBe('Filmy');
-    expect(translations.pl.series).toBe('Seriale');
-  });
-
   it('should have English translations', () => {
     expect(translations.en).toBeDefined();
     expect(translations.en.channels).toBe('Channels');
@@ -28,51 +21,27 @@ describe('translations', () => {
     expect(translations.en.series).toBe('Series');
   });
 
-  it('should have Czech translations', () => {
-    expect(translations.cs).toBeDefined();
-    expect(translations.cs.channels).toBe('TV kanály');
-    expect(translations.cs.movies).toBe('Filmy');
-    expect(translations.cs.series).toBe('Seriály');
-    expect(translations.cs.settings).toBe('Nastavení');
+  it('should have French translations (English fallback)', () => {
+    expect(translations.fr).toBeDefined();
+    expect(translations.fr.channels).toBe('Channels');
+    expect(translations.fr.movies).toBe('Movies');
+    expect(translations.fr.series).toBe('Series');
   });
 
-  it('should have Slovak translations', () => {
-    expect(translations.sk).toBeDefined();
-    expect(translations.sk.channels).toBe('TV kanály');
-    expect(translations.sk.movies).toBe('Filmy');
-    expect(translations.sk.series).toBe('Seriály');
-    expect(translations.sk.settings).toBe('Nastavenia');
-  });
-
-  it('should have Belarusian translations', () => {
-    expect(translations.be).toBeDefined();
-    expect(translations.be.channels).toBe('ТВ каналы');
-    expect(translations.be.movies).toBe('Фільмы');
-    expect(translations.be.series).toBe('Серыялы');
-    expect(translations.be.settings).toBe('Налады');
-  });
-
-  it('should have German translations', () => {
-    expect(translations.de).toBeDefined();
-    expect(translations.de.channels).toBe('TV-Kanäle');
-    expect(translations.de.movies).toBe('Filme');
-    expect(translations.de.series).toBe('Serien');
-    expect(translations.de.settings).toBe('Einstellungen');
+  it('should have Arabic translations (English fallback)', () => {
+    expect(translations.ar).toBeDefined();
+    expect(translations.ar.channels).toBe('Channels');
+    expect(translations.ar.movies).toBe('Movies');
+    expect(translations.ar.series).toBe('Series');
   });
 
   it('should have same keys in all languages', () => {
-    const plKeys = Object.keys(translations.pl).sort();
     const enKeys = Object.keys(translations.en).sort();
-    const csKeys = Object.keys(translations.cs).sort();
-    const skKeys = Object.keys(translations.sk).sort();
-    const beKeys = Object.keys(translations.be).sort();
-    const deKeys = Object.keys(translations.de).sort();
+    const frKeys = Object.keys(translations.fr).sort();
+    const arKeys = Object.keys(translations.ar).sort();
 
-    expect(plKeys).toEqual(enKeys);
-    expect(plKeys).toEqual(csKeys);
-    expect(plKeys).toEqual(skKeys);
-    expect(plKeys).toEqual(beKeys);
-    expect(plKeys).toEqual(deKeys);
+    expect(frKeys).toEqual(enKeys);
+    expect(arKeys).toEqual(enKeys);
   });
 
   it('should have all required translation keys', () => {
@@ -90,36 +59,33 @@ describe('translations', () => {
     ];
 
     requiredKeys.forEach(key => {
-      expect(translations.pl[key]).toBeDefined();
       expect(translations.en[key]).toBeDefined();
-      expect(translations.cs[key]).toBeDefined();
-      expect(translations.sk[key]).toBeDefined();
-      expect(translations.be[key]).toBeDefined();
-      expect(translations.de[key]).toBeDefined();
+      expect(translations.fr[key]).toBeDefined();
+      expect(translations.ar[key]).toBeDefined();
     });
   });
 
   it('should have consistent structure between languages', () => {
-    const plKeys = Object.keys(translations.pl);
     const enKeys = Object.keys(translations.en);
+    const frKeys = Object.keys(translations.fr);
 
-    expect(plKeys.length).toBe(enKeys.length);
+    expect(frKeys.length).toBe(enKeys.length);
 
-    plKeys.forEach(key => {
+    frKeys.forEach(key => {
       expect(translations.en[key as TranslationKey]).toBeDefined();
-      expect(typeof translations.pl[key as TranslationKey]).toBe(typeof translations.en[key as TranslationKey]);
+      expect(typeof translations.fr[key as TranslationKey]).toBe(typeof translations.en[key as TranslationKey]);
     });
   });
 
   it('should have non-empty translations', () => {
-    Object.keys(translations.pl).forEach(key => {
-      const plValue = translations.pl[key as TranslationKey];
+    Object.keys(translations.en).forEach(key => {
       const enValue = translations.en[key as TranslationKey];
+      const frValue = translations.fr[key as TranslationKey];
 
-      expect(plValue).toBeTruthy();
       expect(enValue).toBeTruthy();
-      expect(typeof plValue).toBe('string');
+      expect(frValue).toBeTruthy();
       expect(typeof enValue).toBe('string');
+      expect(typeof frValue).toBe('string');
     });
   });
 });
@@ -127,13 +93,13 @@ describe('translations', () => {
 describe('useTranslation hook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Default: no saved language (will use default 'pl')
+    // Default: no saved language (will use default 'en')
     mockGetSetting.mockResolvedValue(null);
     mockSetSetting.mockResolvedValue(undefined);
 
     // Reset global language state before each test
     const { _resetLanguageState } = jest.requireActual('../useTranslation');
-    _resetLanguageState('pl');
+    _resetLanguageState('en');
   });
 
   it('should provide t function', async () => {
@@ -145,7 +111,7 @@ describe('useTranslation hook', () => {
     });
   });
 
-  it('should have default language as Polish', async () => {
+  it('should have default language as English', async () => {
     mockGetSetting.mockResolvedValue(null);
 
     const { result } = renderHook(() => useTranslation());
@@ -154,7 +120,7 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.currentLang).toBe('pl');
+    expect(result.current.currentLang).toBe('en');
   });
 
   it('should provide isLoading state', async () => {
@@ -167,22 +133,7 @@ describe('useTranslation hook', () => {
     });
   });
 
-  it('should translate Polish keys correctly', async () => {
-    mockGetSetting.mockResolvedValue('pl');
-    const { result } = renderHook(() => useTranslation());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.t('channels')).toBe('Kanały TV');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriale');
-    expect(result.current.t('settings')).toBe('Ustawienia');
-  });
-
-  it('should translate English keys correctly', async () => {
-    mockGetSetting.mockResolvedValue('en');
+  it('should translate keys in English (default)', async () => {
     const { result } = renderHook(() => useTranslation());
 
     await waitFor(() => {
@@ -195,60 +146,26 @@ describe('useTranslation hook', () => {
     expect(result.current.t('settings')).toBe('Settings');
   });
 
-  it('should translate Czech keys correctly', async () => {
-    mockGetSetting.mockResolvedValue('cs');
+  it('should translate keys in French (English fallback)', async () => {
+    mockGetSetting.mockResolvedValue('fr');
     const { result } = renderHook(() => useTranslation());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.t('channels')).toBe('TV kanály');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriály');
-    expect(result.current.t('settings')).toBe('Nastavení');
+    expect(result.current.t('settings')).toBe('Settings');
   });
 
-  it('should translate Slovak keys correctly', async () => {
-    mockGetSetting.mockResolvedValue('sk');
+  it('should translate keys in Arabic (English fallback)', async () => {
+    mockGetSetting.mockResolvedValue('ar');
     const { result } = renderHook(() => useTranslation());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.t('channels')).toBe('TV kanály');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriály');
-    expect(result.current.t('settings')).toBe('Nastavenia');
-  });
-
-  it('should translate Belarusian keys correctly', async () => {
-    mockGetSetting.mockResolvedValue('be');
-    const { result } = renderHook(() => useTranslation());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.t('channels')).toBe('ТВ каналы');
-    expect(result.current.t('movies')).toBe('Фільмы');
-    expect(result.current.t('series')).toBe('Серыялы');
-    expect(result.current.t('settings')).toBe('Налады');
-  });
-
-  it('should translate German keys correctly', async () => {
-    mockGetSetting.mockResolvedValue('de');
-    const { result } = renderHook(() => useTranslation());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.t('channels')).toBe('TV-Kanäle');
-    expect(result.current.t('movies')).toBe('Filme');
-    expect(result.current.t('series')).toBe('Serien');
-    expect(result.current.t('settings')).toBe('Einstellungen');
+    expect(result.current.t('settings')).toBe('Settings');
   });
 
   it('should change language', async () => {
@@ -261,7 +178,7 @@ describe('useTranslation hook', () => {
     });
 
     const initialLang = result.current.currentLang;
-    expect(initialLang).toBe('pl'); // Default language
+    expect(initialLang).toBe('en'); // Default language
 
     await act(async () => {
       await result.current.changeLanguage('en');
@@ -272,7 +189,7 @@ describe('useTranslation hook', () => {
     expect(mockSetSetting).toHaveBeenCalledWith('language', 'en');
   });
 
-  it('should fallback to Polish for unknown keys', async () => {
+  it('should fallback to English for unknown keys', async () => {
     const { result } = renderHook(() => useTranslation());
 
     await waitFor(() => {
@@ -303,8 +220,8 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Should fallback to Polish when invalid language is saved
-    expect(result.current.currentLang).toBe('pl');
+    // Should fallback to English when invalid language is saved
+    expect(result.current.currentLang).toBe('en');
   });
 
   it('should handle settings error gracefully', async () => {
@@ -316,8 +233,8 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Should fallback to Polish on error
-    expect(result.current.currentLang).toBe('pl');
+    // Should fallback to English on error
+    expect(result.current.currentLang).toBe('en');
   });
 
   it('should handle changeLanguage error gracefully', async () => {
@@ -397,7 +314,7 @@ describe('useTranslation hook', () => {
     });
   });
 
-  it('should correctly translate keys in both Polish and English', async () => {
+  it('should correctly translate keys in both English and French', async () => {
     mockGetSetting.mockResolvedValue(null);
 
     const { result } = renderHook(() => useTranslation());
@@ -406,25 +323,7 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Test Polish translations (default)
-    expect(result.current.currentLang).toBe('pl');
-    expect(result.current.t('channels')).toBe('Kanały TV');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriale');
-    expect(result.current.t('settings')).toBe('Ustawienia');
-    expect(result.current.t('search')).toBe('Szukaj');
-    expect(result.current.t('favorites')).toBe('Ulubione');
-    expect(result.current.t('player')).toBe('Odtwarzacz');
-    expect(result.current.t('exit')).toBe('Wyjdź');
-    expect(result.current.t('save')).toBe('Zapisz');
-    expect(result.current.t('cancel')).toBe('Anuluj');
-
-    // Switch to English
-    await act(async () => {
-      await result.current.changeLanguage('en');
-    });
-
-    // Test English translations
+    // Test English translations (default)
     expect(result.current.currentLang).toBe('en');
     expect(result.current.t('channels')).toBe('Channels');
     expect(result.current.t('movies')).toBe('Movies');
@@ -436,9 +335,20 @@ describe('useTranslation hook', () => {
     expect(result.current.t('exit')).toBe('Exit');
     expect(result.current.t('save')).toBe('Save');
     expect(result.current.t('cancel')).toBe('Cancel');
+
+    // Switch to French
+    await act(async () => {
+      await result.current.changeLanguage('fr');
+    });
+
+    // Test French translations (English fallback)
+    expect(result.current.currentLang).toBe('fr');
+    expect(result.current.t('channels')).toBe('Channels');
+    expect(result.current.t('movies')).toBe('Movies');
+    expect(result.current.t('series')).toBe('Series');
   });
 
-  it('should switch between PL and EN multiple times', async () => {
+  it('should switch between EN and FR multiple times', async () => {
     mockGetSetting.mockResolvedValue(null);
 
     const { result } = renderHook(() => useTranslation());
@@ -447,30 +357,27 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Start with Polish
-    expect(result.current.currentLang).toBe('pl');
-    expect(result.current.t('channels')).toBe('Kanały TV');
+    // Start with English
+    expect(result.current.currentLang).toBe('en');
+    expect(result.current.t('channels')).toBe('Channels');
 
-    // Switch to English
+    // Switch to French
+    await act(async () => {
+      await result.current.changeLanguage('fr');
+    });
+    expect(result.current.currentLang).toBe('fr');
+
+    // Switch back to English
     await act(async () => {
       await result.current.changeLanguage('en');
     });
     expect(result.current.currentLang).toBe('en');
-    expect(result.current.t('channels')).toBe('Channels');
 
-    // Switch back to Polish
+    // Switch to French again
     await act(async () => {
-      await result.current.changeLanguage('pl');
+      await result.current.changeLanguage('fr');
     });
-    expect(result.current.currentLang).toBe('pl');
-    expect(result.current.t('channels')).toBe('Kanały TV');
-
-    // Switch to English again
-    await act(async () => {
-      await result.current.changeLanguage('en');
-    });
-    expect(result.current.currentLang).toBe('en');
-    expect(result.current.t('channels')).toBe('Channels');
+    expect(result.current.currentLang).toBe('fr');
   });
 
   it('should switch between all supported languages', async () => {
@@ -482,36 +389,22 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Start with Polish
-    expect(result.current.currentLang).toBe('pl');
+    // Start with English
+    expect(result.current.currentLang).toBe('en');
 
-    // Switch to Czech
+    // Switch to French
     await act(async () => {
-      await result.current.changeLanguage('cs');
+      await result.current.changeLanguage('fr');
     });
-    expect(result.current.currentLang).toBe('cs');
-    expect(result.current.t('settings')).toBe('Nastavení');
+    expect(result.current.currentLang).toBe('fr');
+    expect(result.current.t('settings')).toBe('Settings');
 
-    // Switch to Slovak
+    // Switch to Arabic
     await act(async () => {
-      await result.current.changeLanguage('sk');
+      await result.current.changeLanguage('ar');
     });
-    expect(result.current.currentLang).toBe('sk');
-    expect(result.current.t('settings')).toBe('Nastavenia');
-
-    // Switch to Belarusian
-    await act(async () => {
-      await result.current.changeLanguage('be');
-    });
-    expect(result.current.currentLang).toBe('be');
-    expect(result.current.t('settings')).toBe('Налады');
-
-    // Switch to German
-    await act(async () => {
-      await result.current.changeLanguage('de');
-    });
-    expect(result.current.currentLang).toBe('de');
-    expect(result.current.t('settings')).toBe('Einstellungen');
+    expect(result.current.currentLang).toBe('ar');
+    expect(result.current.t('settings')).toBe('Settings');
 
     // Switch back to English
     await act(async () => {
@@ -535,8 +428,8 @@ describe('useTranslation hook', () => {
     expect(result.current.t('series')).toBe('Series');
   });
 
-  it('should load Polish from saved settings', async () => {
-    mockGetSetting.mockResolvedValue('pl');
+  it('should load French from saved settings', async () => {
+    mockGetSetting.mockResolvedValue('fr');
 
     const { result } = renderHook(() => useTranslation());
 
@@ -544,13 +437,12 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.currentLang).toBe('pl');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriale');
+    expect(result.current.currentLang).toBe('fr');
+    expect(result.current.t('settings')).toBe('Settings');
   });
 
-  it('should load Czech from saved settings', async () => {
-    mockGetSetting.mockResolvedValue('cs');
+  it('should load Arabic from saved settings', async () => {
+    mockGetSetting.mockResolvedValue('ar');
 
     const { result } = renderHook(() => useTranslation());
 
@@ -558,51 +450,8 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.currentLang).toBe('cs');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriály');
-  });
-
-  it('should load Slovak from saved settings', async () => {
-    mockGetSetting.mockResolvedValue('sk');
-
-    const { result } = renderHook(() => useTranslation());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.currentLang).toBe('sk');
-    expect(result.current.t('movies')).toBe('Filmy');
-    expect(result.current.t('series')).toBe('Seriály');
-  });
-
-  it('should load Belarusian from saved settings', async () => {
-    mockGetSetting.mockResolvedValue('be');
-
-    const { result } = renderHook(() => useTranslation());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.currentLang).toBe('be');
-    expect(result.current.t('movies')).toBe('Фільмы');
-    expect(result.current.t('series')).toBe('Серыялы');
-  });
-
-  it('should load German from saved settings', async () => {
-    mockGetSetting.mockResolvedValue('de');
-
-    const { result } = renderHook(() => useTranslation());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.currentLang).toBe('de');
-    expect(result.current.t('movies')).toBe('Filme');
-    expect(result.current.t('series')).toBe('Serien');
+    expect(result.current.currentLang).toBe('ar');
+    expect(result.current.t('settings')).toBe('Settings');
   });
 
   it('should memoize t function', async () => {
@@ -652,7 +501,7 @@ describe('useTranslation hook', () => {
 
     // Reset global state to simulate fresh start
     const { _resetLanguageState } = jest.requireActual('../useTranslation');
-    _resetLanguageState('pl');
+    _resetLanguageState('en');
 
     // Create a new hook instance
     const { result: result2 } = renderHook(() => useTranslation());
@@ -662,7 +511,7 @@ describe('useTranslation hook', () => {
     });
 
     // Should start with fresh state after reset
-    expect(result2.current.currentLang).toBe('pl');
+    expect(result2.current.currentLang).toBe('en');
   });
 
   it('should handle null saved language', async () => {
@@ -674,7 +523,7 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.currentLang).toBe('pl');
+    expect(result.current.currentLang).toBe('en');
   });
 
   it('should handle undefined saved language', async () => {
@@ -686,18 +535,18 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.currentLang).toBe('pl');
+    expect(result.current.currentLang).toBe('en');
   });
 
-  it('should fallback to Polish when currentLang translation is missing', async () => {
+  it('should fallback to English when currentLang translation is missing', async () => {
     const { result } = renderHook(() => useTranslation());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // If a key exists in Polish but not in English, it should fallback
-    // This tests the fallback chain: currentLang -> pl -> key
+    // If a key exists in English but not in another language, it should fallback
+    // This tests the fallback chain: currentLang -> en -> key
     const translation = result.current.t('channels');
     expect(translation).toBeDefined();
     expect(typeof translation).toBe('string');
@@ -725,7 +574,7 @@ describe('useTranslation hook', () => {
     // Rapidly change language multiple times
     await act(async () => {
       await result.current.changeLanguage('en');
-      await result.current.changeLanguage('pl');
+      await result.current.changeLanguage('fr');
       await result.current.changeLanguage('en');
     });
 
@@ -757,7 +606,7 @@ describe('useTranslation hook', () => {
   });
 
   it('should handle language code not in allowed list', async () => {
-    mockGetSetting.mockResolvedValue('fr' as any);
+    mockGetSetting.mockResolvedValue('xx' as any);
 
     const { result } = renderHook(() => useTranslation());
 
@@ -765,8 +614,8 @@ describe('useTranslation hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Should fallback to Polish for invalid language (fr is not in the list)
-    expect(result.current.currentLang).toBe('pl');
+    // Should fallback to English for invalid language (xx is not in the list)
+    expect(result.current.currentLang).toBe('en');
   });
 
   it('should update global language state on change', async () => {

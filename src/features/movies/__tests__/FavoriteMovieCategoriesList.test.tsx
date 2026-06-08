@@ -30,14 +30,18 @@ const mockUseTranslation = useTranslation as jest.MockedFunction<typeof useTrans
 
 const mockT = jest.fn((key: string) => {
   const translations: Record<string, string> = {
-    favoriteMovieCategories: 'Ulubione kategorie filmów',
-    yourFavoriteMovieCategories: 'Twoje ulubione kategorie filmów',
-    noFavoriteMovieCategories: 'Brak ulubionych kategorii filmów',
-    addFavoriteMovieCategoriesHint: 'Nie masz jeszcze żadnych ulubionych kategorii filmów.',
-    movieCategoryTip: '💡 Wskazówka: Przejdź do Movies → Categories i kliknij serce.',
-    removeFromFavorites: 'Usuń z ulubionych',
-    addToFavorites: 'Dodaj do ulubionych',
-    all: 'Wszystkie',
+    favoriteMovieCategories: 'Favorite movie categories',
+    yourFavoriteMovieCategories: 'Your favorite movie categories',
+    noFavoriteMovieCategories: 'No favorite movie categories',
+    addFavoriteMovieCategoriesHint: 'You don\'t have any favorite movie categories yet.',
+    movieCategoryTip: 'Go to Movies and click the heart icon.',
+    removeFromFavorites: 'Remove from favorites',
+    addToFavorites: 'Add to favorites',
+    all: 'All',
+    categoryLoadError: 'Error loading categories',
+    categoryLoadErrorDesc: 'Failed to load categories. Please try again.',
+    tryAgain: 'Try again',
+    noResults: 'No results',
   };
   return translations[key] || key;
 });
@@ -56,7 +60,7 @@ describe('FavoriteMovieCategoriesList', () => {
     
     mockUseTranslation.mockReturnValue({
       t: mockT,
-      currentLang: 'pl',
+      currentLang: 'en',
       changeLanguage: jest.fn(),
       isLoading: false,
     } as any);
@@ -118,8 +122,8 @@ describe('FavoriteMovieCategoriesList', () => {
     );
 
     expect(screen.getByText('⚠️')).toBeInTheDocument();
-    expect(screen.getByText('Błąd ładowania kategorii')).toBeInTheDocument();
-    expect(screen.getByText('Spróbuj ponownie')).toBeInTheDocument();
+    expect(screen.getByText('Error loading categories')).toBeInTheDocument();
+    expect(screen.getByText('Try again')).toBeInTheDocument();
   });
 
   it('should render empty state when no favorites', () => {
@@ -139,7 +143,7 @@ describe('FavoriteMovieCategoriesList', () => {
     );
 
     expect(screen.getByText('⭐')).toBeInTheDocument();
-    expect(screen.getByText('Brak ulubionych kategorii filmów')).toBeInTheDocument();
+    expect(screen.getByText('No favorite movie categories')).toBeInTheDocument();
   });
 
   it('should render favorite categories', () => {
@@ -180,7 +184,7 @@ describe('FavoriteMovieCategoriesList', () => {
     );
 
     expect(screen.getByText('🔍')).toBeInTheDocument();
-    expect(screen.getByText('Nie znaleziono kategorii')).toBeInTheDocument();
+    expect(screen.getByText('No results')).toBeInTheDocument();
   });
 
   it('should call onCategorySelect when category clicked', () => {
@@ -214,7 +218,7 @@ describe('FavoriteMovieCategoriesList', () => {
       />
     );
 
-    const favoriteButtons = screen.getAllByRole('button', { name: /Usuń z ulubionych/i });
+    const favoriteButtons = screen.getAllByRole('button', { name: /Remove from favorites/i });
     fireEvent.click(favoriteButtons[0]);
 
     expect(mockToggleCategory).toHaveBeenCalled();
@@ -252,7 +256,7 @@ describe('FavoriteMovieCategoriesList', () => {
       />
     );
 
-    const retryButton = screen.getByText('Spróbuj ponownie');
+    const retryButton = screen.getByText('Try again');
     fireEvent.click(retryButton);
 
     expect(mockRefetch).toHaveBeenCalled();

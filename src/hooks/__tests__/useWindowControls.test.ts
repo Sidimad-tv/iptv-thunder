@@ -28,7 +28,7 @@ describe('useWindowControls', () => {
 
   it('should initialize with isMaximized as false', async () => {
     const mockWindow = {
-      isMaximized: jest.fn().mockResolvedValue(false),
+      isFullscreen: jest.fn().mockResolvedValue(false),
     };
     (getCurrentWindow as jest.Mock).mockReturnValue(mockWindow);
 
@@ -44,7 +44,7 @@ describe('useWindowControls', () => {
 
   it('should initialize with isMaximized as true', async () => {
     const mockWindow = {
-      isMaximized: jest.fn().mockResolvedValue(true),
+      isFullscreen: jest.fn().mockResolvedValue(true),
     };
     (getCurrentWindow as jest.Mock).mockReturnValue(mockWindow);
 
@@ -60,8 +60,8 @@ describe('useWindowControls', () => {
 
   it('should handle maximize when not maximized', async () => {
     const mockWindow = {
-      isMaximized: jest.fn().mockResolvedValue(false),
-      maximize: jest.fn().mockResolvedValue(undefined),
+      isFullscreen: jest.fn().mockResolvedValue(false),
+      setFullscreen: jest.fn().mockResolvedValue(undefined),
     };
     (getCurrentWindow as jest.Mock).mockReturnValue(mockWindow);
 
@@ -71,13 +71,13 @@ describe('useWindowControls', () => {
       await result.current.handleMaximize();
     });
 
-    expect(mockWindow.maximize).toHaveBeenCalled();
+    expect(mockWindow.setFullscreen).toHaveBeenCalledWith(true);
   });
 
   it('should handle unmaximize when maximized', async () => {
     const mockWindow = {
-      isMaximized: jest.fn().mockResolvedValue(true),
-      unmaximize: jest.fn().mockResolvedValue(undefined),
+      isFullscreen: jest.fn().mockResolvedValue(true),
+      setFullscreen: jest.fn().mockResolvedValue(undefined),
     };
     (getCurrentWindow as jest.Mock).mockReturnValue(mockWindow);
 
@@ -92,7 +92,7 @@ describe('useWindowControls', () => {
       await result.current.handleMaximize();
     });
 
-    expect(mockWindow.unmaximize).toHaveBeenCalled();
+    expect(mockWindow.setFullscreen).toHaveBeenCalledWith(false);
   });
 
   it('should handle minimize', async () => {
@@ -127,7 +127,7 @@ describe('useWindowControls', () => {
 
   it('should handle errors gracefully in handleMaximize', async () => {
     const mockWindow = {
-      maximize: jest.fn().mockRejectedValue(new Error('Error')),
+      isFullscreen: jest.fn().mockRejectedValue(new Error('Error')),
     };
     (getCurrentWindow as jest.Mock).mockReturnValue(mockWindow);
 
@@ -168,7 +168,7 @@ describe('useWindowControls', () => {
     const mockUnlisten = jest.fn();
     (listen as jest.Mock).mockResolvedValue(mockUnlisten);
     const mockWindow = {
-      isMaximized: jest.fn().mockResolvedValue(false),
+      isFullscreen: jest.fn().mockResolvedValue(false),
     };
     (getCurrentWindow as jest.Mock).mockReturnValue(mockWindow);
 

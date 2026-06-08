@@ -24,6 +24,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -43,6 +44,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -57,6 +59,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -70,6 +73,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -83,6 +87,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -96,6 +101,7 @@ describe('useNavigationMenu', () => {
         activePortal: null,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -112,6 +118,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -126,6 +133,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -140,6 +148,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -154,6 +163,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -168,6 +178,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -184,6 +195,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -200,6 +212,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 
@@ -216,6 +229,7 @@ describe('useNavigationMenu', () => {
         activePortal,
         navigate: mockNavigate,
         setIsSettingsOpen: mockSetIsSettingsOpen,
+        activeM3uId: null,
       })
     );
 

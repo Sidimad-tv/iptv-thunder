@@ -641,18 +641,33 @@ export function useMpvPlayer(
 
     mpvRunningRef.current = true;
 
-    const hwdecValue = hwAccelEnabled ? 'auto-safe' : 'no';
+    // Read MPV settings from store for configurable values
+    let cacheSecs = '30', networkTimeout = '120', demuxerReadahead = '5';
+    let streamBufferSize = '8M', reconnectDelayMax = '10', hwdecValue = hwAccelEnabled ? 'auto-safe' : 'no';
+    try {
+      const { getSetting } = await import('@/hooks/useSettings');
+      cacheSecs = String(await getSetting('mpvCacheSecs'));
+      networkTimeout = String(await getSetting('mpvNetworkTimeout'));
+      demuxerReadahead = String(await getSetting('mpvDemuxerReadahead'));
+      streamBufferSize = await getSetting('mpvStreamBufferSize');
+      reconnectDelayMax = String(await getSetting('mpvReconnectDelayMax'));
+      const enableHwdec = await getSetting('mpvEnableHwdec');
+      hwdecValue = enableHwdec ? 'auto-safe' : 'no';
+    } catch {
+      // Fall back to defaults if settings unavailable
+    }
+
     const mpvConfig = {
       initialOptions: {
         'hwdec': hwdecValue,
         'keep-open': 'yes',
         'cache': 'yes',
-        'cache-secs': '25',
-        'demuxer-readahead-secs': '5',
+        'cache-secs': cacheSecs,
+        'demuxer-readahead-secs': demuxerReadahead,
         'demuxer-max-bytes': '100MiB',
         'demuxer-max-back-bytes': '50MiB',
-        'network-timeout': '60',
-        'stream-buffer-size': '8M',
+        'network-timeout': networkTimeout,
+        'stream-buffer-size': streamBufferSize,
         'aid': 'auto',
         'sid': 'no',
         'sub-auto': 'no',
@@ -661,7 +676,7 @@ export function useMpvPlayer(
           'reconnect_streamed=1',
           'reconnect_on_network_error=1',
           'reconnect_on_http_error=4xx,5xx',
-          'reconnect_delay_max=10',
+          `reconnect_delay_max=${reconnectDelayMax}`,
           'timeout=30000000',
         ].join(','),
       },
@@ -872,20 +887,23 @@ export function useMpvPlayer(
   const lastStallPositionRef = useRef<number>(0);
   const stallCountAtPositionRef = useRef(0);
 
-  // Helper: handle stall recovery with seek and audio reinit
+  // Helper: handle stall recovery — for live TV just increase cache (no seek, which causes chop)
   const handleStallRecovery = useCallback((stallTimeout: number, now: number) => {
-    if (now - lastRetryRef.current < 15000) return;
+    if (now - lastRetryRef.current < 20000) return;
     lastRetryRef.current = now;
 
     const currentPos = currentTimeRef.current || 0;
     console.warn(`⚠️ Stream stalled - no time update for ${stallTimeout / 1000}s at position ${currentPos.toFixed(1)}s`);
     setStreamState('stalled');
 
+    // For live TV: just increase cache and wait — no seek (seeking forward causes the chop/glitch)
+    if (!isVodRef.current) {
+      const recoveryCacheSecs = Math.min(currentCacheSecsRef.current + 10, 60);
+      void setProperty('cache-secs', recoveryCacheSecs.toString());
+      return;
+    }
+
     // Check if stalling at same position repeatedly - restart from beginning
-    // Only track same-position stalls after:
-    // 1. Playback has actually started (firstTimePosRef > 0)
-    // 2. Current position is > 0 (not stuck at initial position)
-    // This prevents false positives during initial buffering at position 0
     const hasPlaybackStarted = firstTimePosRef.current > 0;
     const isBeyondInitialPosition = currentPos > 0;
     if (hasPlaybackStarted && isBeyondInitialPosition && Math.abs(currentPos - lastStallPositionRef.current) < 10) {
@@ -895,8 +913,7 @@ export function useMpvPlayer(
         console.warn('🔄 Stalling at same position, restarting stream from beginning');
         stallCountAtPositionRef.current = 0;
         lastStallPositionRef.current = 0;
-        // Restart from beginning with clean cache
-        void setProperty('cache-secs', '5'); // Reduce cache to force fresh load
+        void setProperty('cache-secs', '5');
         void command('seek', [0, 'absolute']);
         return;
       }
@@ -912,19 +929,14 @@ export function useMpvPlayer(
       return;
     }
 
-    // Increase cache aggressively during stall recovery
     const recoveryCacheSecs = Math.min(currentCacheSecsRef.current + 10, 60);
     void setProperty('cache-secs', recoveryCacheSecs.toString());
 
-    // Seek forward by 5 seconds to skip potentially bad segment
     const seekTarget = Math.max(0, currentPos + 5);
 
     void command('seek', [seekTarget, 'absolute']).then(async () => {
       setStreamState('playing');
       failedSeekRecoveryRef.current = 0;
-      // Don't reset stall counter - we need to track if we're stalling at same position after seek
-
-      // Reinitialize audio track after seek
       if (currentAudioId) {
         try {
           await setProperty('aid', currentAudioId);
@@ -951,7 +963,7 @@ export function useMpvPlayer(
         if (checkVodEnd()) return;
       }
 
-      const stallTimeout = isVod ? 20000 : 10000;
+      const stallTimeout = isVod ? 25000 : 20000;
 
       if (timeSinceLastUpdate > stallTimeout) {
         handleStallRecovery(stallTimeout, now);

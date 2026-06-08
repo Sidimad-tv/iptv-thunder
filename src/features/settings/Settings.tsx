@@ -3,9 +3,10 @@ import { usePortalsStore } from '@/store/portals.store';
 import { useEpgServices } from '@/features/epg/epg.hooks';
 import { getSettings, setSetting, AppSettings } from '@/hooks/useSettings';
 import { getVersion } from '@tauri-apps/api/app';
+import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings as SettingsIcon, MonitorPlay, Tv, Wrench, Info, X, Trash2 } from 'lucide-react';
+import { Settings as SettingsIcon, MonitorPlay, Tv, Wrench, Info, X, Trash2, Download, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { TranslationKey } from '@/lib/translations';
@@ -18,11 +19,12 @@ interface SettingsProps {
   onClose: () => void;
 }
 
-type TabType = 'general' | 'player' | 'epg' | 'advanced' | 'about';
+type TabType = 'general' | 'player' | 'mpv' | 'epg' | 'advanced' | 'about';
 
 const useTabs = (t: (key: TranslationKey) => string) => [
   { id: 'general' as const, label: t('general'), icon: <SettingsIcon className="w-4 h-4" /> },
   { id: 'player' as const, label: t('player'), icon: <MonitorPlay className="w-4 h-4" /> },
+  { id: 'mpv' as const, label: 'MPV', icon: <RefreshCw className="w-4 h-4" /> },
   { id: 'epg' as const, label: t('epg'), icon: <Tv className="w-4 h-4" /> },
   { id: 'advanced' as const, label: t('advanced'), icon: <Wrench className="w-4 h-4" /> },
   { id: 'about' as const, label: t('about'), icon: <Info className="w-4 h-4" /> },
@@ -30,7 +32,7 @@ const useTabs = (t: (key: TranslationKey) => string) => [
 
 export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { t, currentLang, changeLanguage } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, themePreset, setThemePreset } = useTheme();
   const queryClient = useQueryClient();
   const TABS = useTabs(t);
   const epgServices = useEpgServices();
@@ -223,18 +225,15 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                         onKeyDown={(e: React.KeyboardEvent<HTMLSelectElement>) => {
                           if (e.key === 'Enter' || e.key === 'OK' || e.key === 'Select') {
                             e.preventDefault();
-                            // Try to open select dropdown using showPicker API
                             const select = e.currentTarget;
                             if ('showPicker' in select) {
                               select.showPicker();
                             } else {
-                              // Fallback: focus and expand size to show all options
                               const fallbackSelect = select as HTMLSelectElement;
                               fallbackSelect.size = fallbackSelect.options.length;
                               fallbackSelect.focus();
                             }
                           } else if (e.key === 'Escape' || e.key === 'Back') {
-                            // Close expanded select
                             e.currentTarget.size = 0;
                           }
                         }}
@@ -247,6 +246,21 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">Theme preset</label>
+                      <select
+                        data-tv-focusable data-tv-id="settings-preset-select" data-tv-group="settings-content" data-tv-index="12" tabIndex={0}
+                        value={themePreset}
+                        onChange={(e) => { setThemePreset(e.target.value as any); updateSetting('themePreset', e.target.value as any); }}
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
+                      >
+                        <option value="oled">OLED — True Black + Green</option>
+                        <option value="ocean">Ocean — Dark Blue</option>
+                        <option value="classic">Classic — Teal</option>
+                      </select>
+                      <p className="text-xs dark:text-slate-500 text-slate-500 mt-1">Changes apply immediately</p>
+                    </div>
+
+                    <div>
                       <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">{t('language')}</label>
                       <select
                         data-tv-focusable
@@ -255,7 +269,7 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                         data-tv-index="11"
                         tabIndex={0}
                         value={currentLang}
-                        onChange={(e) => changeLanguage(e.target.value as 'pl' | 'en' | 'cs' | 'sk' | 'be' | 'de')}
+                        onChange={(e) => changeLanguage(e.target.value as 'en' | 'fr' | 'ar')}
                         onKeyDown={(e: React.KeyboardEvent<HTMLSelectElement>) => {
                           if (e.key === 'Enter' || e.key === 'OK' || e.key === 'Select') {
                             e.preventDefault();
@@ -276,12 +290,9 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                         }}
                         className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
                       >
-                        <option value="pl">Polski</option>
-                        <option value="cs">Čeština</option>
-                        <option value="sk">Slovenčina</option>
-                        <option value="be">Беларуская</option>
-                        <option value="de">Deutsch</option>
                         <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="ar">العربية</option>
                       </select>
                     </div>
                   </div>
@@ -377,6 +388,77 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                         tabIndex={0}
                         checked={settings.hardwareAcceleration}
                         onCheckedChange={(v) => updateSetting('hardwareAcceleration', v)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'mpv' && (
+                  <div className="max-w-md space-y-8" data-tv-tab="mpv">
+                    <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">Cache (seconds)</label>
+                      <input type="number" min="5" max="120"
+                        data-tv-focusable data-tv-id="settings-mpv-cache" data-tv-group="settings-content" data-tv-initial data-tv-index="50" tabIndex={0}
+                        value={settings.mpvCacheSecs}
+                        onChange={(e) => updateSetting('mpvCacheSecs', Number.parseInt(e.target.value) || 30)}
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
+                      />
+                      <p className="text-xs dark:text-slate-500 text-slate-500 mt-1">Data buffered ahead (higher = smoother, more RAM)</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">Network timeout (seconds)</label>
+                      <input type="number" min="10" max="300"
+                        data-tv-focusable data-tv-id="settings-mpv-timeout" data-tv-group="settings-content" data-tv-index="51" tabIndex={0}
+                        value={settings.mpvNetworkTimeout}
+                        onChange={(e) => updateSetting('mpvNetworkTimeout', Number.parseInt(e.target.value) || 120)}
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">Demuxer readahead (seconds)</label>
+                      <input type="number" min="1" max="30"
+                        data-tv-focusable data-tv-id="settings-mpv-readahead" data-tv-group="settings-content" data-tv-index="52" tabIndex={0}
+                        value={settings.mpvDemuxerReadahead}
+                        onChange={(e) => updateSetting('mpvDemuxerReadahead', Number.parseInt(e.target.value) || 5)}
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">Stream buffer size</label>
+                      <select data-tv-focusable data-tv-id="settings-mpv-buffer" data-tv-group="settings-content" data-tv-index="53" tabIndex={0}
+                        value={settings.mpvStreamBufferSize}
+                        onChange={(e) => updateSetting('mpvStreamBufferSize', e.target.value)}
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
+                      >
+                        <option value="2M">2 MB</option>
+                        <option value="4M">4 MB</option>
+                        <option value="8M">8 MB</option>
+                        <option value="16M">16 MB</option>
+                        <option value="32M">32 MB</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">Reconnect delay max (seconds)</label>
+                      <input type="number" min="2" max="60"
+                        data-tv-focusable data-tv-id="settings-mpv-reconnect" data-tv-group="settings-content" data-tv-index="54" tabIndex={0}
+                        value={settings.mpvReconnectDelayMax}
+                        onChange={(e) => updateSetting('mpvReconnectDelayMax', Number.parseInt(e.target.value) || 10)}
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium dark:text-white text-slate-900">Hardware decoding</p>
+                        <p className="text-sm dark:text-slate-400 text-slate-600">GPU-accelerated video decoding</p>
+                      </div>
+                      <Switch data-tv-focusable="true" data-tv-id="settings-mpv-hwdec" data-tv-group="settings-content" data-tv-index="55" tabIndex={0}
+                        checked={settings.mpvEnableHwdec}
+                        onCheckedChange={(v) => updateSetting('mpvEnableHwdec', v)}
                       />
                     </div>
                   </div>
@@ -515,18 +597,53 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                 )}
 
                 {activeTab === 'about' && (
-                  <div className="flex flex-col items-center justify-center h-full py-12 text-center" data-tv-tab="about">
+                  <div className="flex flex-col items-center justify-center h-full py-8 text-center" data-tv-tab="about">
                     <img
                       src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
                       alt="S!d!m@dtv-STB"
                       className="w-24 h-24 object-contain mb-4"
                     />
                     <h3 className="text-3xl font-bold text-green-500 mb-1 tracking-wider">S!d!m@dtv-STB</h3>
-                    <p className="dark:text-slate-400 text-slate-600 mb-6">{t('version')} {version || '—'}</p>
+                    <p className="dark:text-slate-400 text-slate-600 mb-4">{t('version')} {version || '—'}</p>
                     
-                    <div className="text-sm dark:text-slate-500 text-slate-500 max-w-xs leading-relaxed">
+                    <div className="text-sm dark:text-slate-500 text-slate-500 max-w-xs leading-relaxed mb-6">
                       {t('appDescription')}
                     </div>
+
+                    <button
+                      data-tv-focusable data-tv-id="settings-check-updates" data-tv-group="settings-content" data-tv-index="60" tabIndex={0}
+                      onClick={async () => {
+                        try {
+                          // Try running update.exe (CDN check -> GitHub fallback)
+                          await invoke('run_updater');
+                        } catch (updaterErr) {
+                          // Fallback: GitHub API check
+                          try {
+                            const res = await fetch('https://api.github.com/repos/Sidimad-tv/iptv-thunder/releases/latest');
+                            if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
+                            const data = await res.json();
+                            const latestVer = (data.tag_name || data.name || '').replace(/^v/i, '');
+                            if (!latestVer) throw new Error('No version in release data');
+                            const current = version || '1.0.0';
+                            if (latestVer !== current) {
+                              const ok = confirm(`Update ${latestVer} available (you have ${current}).\nOpen download page?`);
+                              if (ok) {
+                                const { openUrl } = await import('@tauri-apps/plugin-opener');
+                                await openUrl(data.html_url || `https://github.com/Sidimad-tv/iptv-thunder/releases/latest`);
+                              }
+                            } else {
+                              alert(`You have the latest version (${current}).`);
+                            }
+                          } catch (err) {
+                            alert(`Update check failed: ${updaterErr instanceof Error ? updaterErr.message : 'Unknown error'}\n\nGitHub check also failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                          }
+                        }
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-emerald-500/30 transition-all text-sm"
+                    >
+                      <Download className="w-4 h-4" />
+                      Check for Updates
+                    </button>
                   </div>
                 )}
               </div>

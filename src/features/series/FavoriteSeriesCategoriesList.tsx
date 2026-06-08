@@ -138,17 +138,15 @@ export const FavoriteSeriesCategoriesList: React.FC<
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center dark:text-white text-slate-900 max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
-          <h3 className="text-xl font-semibold mb-2">
-            Błąd ładowania kategorii
-          </h3>
+          <h3 className="text-xl font-semibold mb-2">{t('categoryLoadError')}</h3>
           <p className="dark:text-slate-400 text-slate-600 mb-4">
-            Nie udało się pobrać ulubionych kategorii seriali. Spróbuj ponownie.
+            {t('categoryLoadErrorDesc')}
           </p>
           <button
             onClick={() => refetch()}
             className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
           >
-            Spróbuj ponownie
+            {t('tryAgain')}
           </button>
         </div>
       </div>
@@ -181,11 +179,9 @@ export const FavoriteSeriesCategoriesList: React.FC<
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center dark:text-white text-slate-900">
           <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold mb-2">
-            Nie znaleziono kategorii
-          </h3>
+          <h3 className="text-xl font-semibold mb-2">{t('noResults')}</h3>
           <p className="dark:text-slate-400 text-slate-600">
-            Nie znaleziono ulubionych kategorii seriali pasujących do "{search}"
+            No favorite series categories matching "{search}"
           </p>
         </div>
       </div>
@@ -204,7 +200,7 @@ export const FavoriteSeriesCategoriesList: React.FC<
         </p>
         {search && (
           <p className="text-green-700 text-sm mt-2">
-            Wyniki wyszukiwania dla: "{search}"
+            Search results for: "{search}"
           </p>
         )}
       </div>
@@ -243,7 +239,7 @@ export const FavoriteSeriesCategoriesList: React.FC<
                 onClick={() => onCategorySelect(selectedCategory)}
                 className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors flex items-center gap-2"
               >
-                <span>📺</span> Pokaż seriale
+                <span>📺</span> Show Series
               </button>
             </div>
           </div>

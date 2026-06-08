@@ -20,7 +20,15 @@ type SimpleRoute =
   | { type: 'favorite-movies' }
   | { type: 'series-categories' }
   | { type: 'favorite-series-categories' }
-  | { type: 'favorite-series' };
+  | { type: 'favorite-series' }
+  | { type: 'scb1' }
+  | { type: 'scb2' }
+  | { type: 'scb3' }
+  | { type: 'imdb' }
+  | { type: 'm3u' }
+  | { type: 'm3u-channels' }
+  | { type: 'm3u-movies' }
+  | { type: 'm3u-series' };
 
 // Routes with parameters
 type ParamRoute =
@@ -104,7 +112,8 @@ export const useTypedRouter = () => {
       // Don't save navbar element as focus for main content routes
       const isPreviousNavbarRoute = previousRouteType === 'portals' || previousRouteType === 'for-you' ||
                                     previousRouteType === 'tv' || previousRouteType === 'movies' ||
-                                    previousRouteType === 'series';
+                                    previousRouteType === 'series' || previousRouteType === 'm3u' ||
+                                    previousRouteType === 'm3u-channels';
       const isNavbarElement = focusedGroup === 'navbar';
 
       // Only save focus if:
@@ -113,7 +122,8 @@ export const useTypedRouter = () => {
       // 3. Current route is NOT a navbar route (don't save navbar focus when going to main content)
       const isCurrentNavbarRoute = currentRouteType === 'portals' || currentRouteType === 'for-you' ||
                                    currentRouteType === 'tv' || currentRouteType === 'movies' ||
-                                   currentRouteType === 'series';
+                                   currentRouteType === 'series' || currentRouteType === 'm3u' ||
+                                   currentRouteType === 'm3u-channels';
 
       if ((!isPreviousNavbarRoute || !isNavbarElement) && !isCurrentNavbarRoute && focusedElement?.dataset.tvFocusable) {
         lastFocusRef.current[previousRouteType] = focusedElement.id || focusedElement.dataset.tvId || '';
@@ -123,7 +133,8 @@ export const useTypedRouter = () => {
       const savedFocusId = lastFocusRef.current[currentRouteType];
       const isNavbarRoute = currentRouteType === 'portals' || currentRouteType === 'for-you' ||
                            currentRouteType === 'tv' || currentRouteType === 'movies' ||
-                           currentRouteType === 'series';
+                           currentRouteType === 'series' || currentRouteType === 'm3u' ||
+                           currentRouteType === 'm3u-channels';
 
       if (savedFocusId) {
         setTimeout(() => {
@@ -195,6 +206,14 @@ export const useTypedRouter = () => {
         case 'favorite-series':
         case 'movie-details':
         case 'series-details':
+        case 'scb1':
+        case 'scb2':
+        case 'scb3':
+        case 'imdb':
+        case 'm3u':
+        case 'm3u-channels':
+        case 'm3u-movies':
+        case 'm3u-series':
           // Already in the correct content view or not applicable
           return currentRoute;
       }

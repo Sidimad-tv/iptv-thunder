@@ -56,11 +56,9 @@ export function usePlayerControls(): UsePlayerControlsReturn {
       const newState = !isFullscreen;
 
       if (newState) {
-        // Entering fullscreen: enable decorations for proper Windows behavior
         await window.setDecorations(true);
         await window.setFullscreen(true);
       } else {
-        // Exiting fullscreen: disable decorations and exit fullscreen
         await window.setFullscreen(false);
         await window.setDecorations(false);
       }
@@ -76,7 +74,6 @@ export function usePlayerControls(): UsePlayerControlsReturn {
       const newState = !isPip;
 
       if (newState) {
-        // Enter PiP mode
         await window.setAlwaysOnTop(true);
         await window.setSize(new LogicalSize(640, 360));
         await window.setPosition(new LogicalPosition(50, 50));
@@ -86,7 +83,6 @@ export function usePlayerControls(): UsePlayerControlsReturn {
           setFullscreen(false);
         }
       } else {
-        // Exit PiP mode
         await window.setAlwaysOnTop(false);
         await window.setSize(new LogicalSize(1280, 720));
         await window.setPosition(new LogicalPosition(0, 0));

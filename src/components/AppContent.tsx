@@ -21,6 +21,8 @@ const SeriesCategoriesList = lazy(() => import('@/features/series/SeriesCategori
 const FavoriteSeriesCategoriesList = lazy(() => import('@/features/series/FavoriteSeriesCategoriesList').then(module => ({ default: module.FavoriteSeriesCategoriesList })));
 const FavoriteSeriesList = lazy(() => import('@/features/series/FavoriteSeriesList').then(module => ({ default: module.FavoriteSeriesList })));
 const ForYouSection = lazy(() => import('@/features/personalized/ForYouSection').then(module => ({ default: module.ForYouSection })));
+const M3uList = lazy(() => import('@/features/m3u/M3uList').then(module => ({ default: module.M3uList })));
+const M3uChannelsPage = lazy(() => import('@/features/m3u/M3uChannelsPage').then(module => ({ default: module.M3uChannelsPage })));
 
 interface AppContentProps {
   route: Route;
@@ -54,6 +56,70 @@ export const AppContent: React.FC<AppContentProps> = ({
   // Extract typed data from route using type guards
   const selectedMovie = isMovieDetails(route) ? route.movie : null;
   const selectedSeries = isSeriesDetails(route) ? route.series : null;
+
+  // External pages — accessible without portal
+  if (route.type === 'scb1' || route.type === 'scb2' || route.type === 'scb3' || route.type === 'imdb') {
+    const pages: Record<string, string> = {
+      scb1: '/1/SCB1.html',
+      scb2: '/1/SCB2.html',
+      scb3: '/1/SCB3.html',
+      imdb: '/1/SIdimdb/index.html',
+    };
+    const cacheBuster = Date.now();
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 bg-black">
+          <iframe
+            key={`${route.type}-${cacheBuster}`}
+            src={`${pages[route.type]}?t=${cacheBuster}`}
+            className="w-full h-full border-0"
+            title={route.type}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // M3U pages — accessible without portal
+  if (route.type === 'm3u') {
+    return (
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading M3U Playlists...</div>}>
+        <M3uList />
+      </Suspense>
+    );
+  }
+
+  if (route.type === 'm3u-channels') {
+    return (
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading channels...</div>}>
+        <M3uChannelsPage />
+      </Suspense>
+    );
+  }
+
+  if (route.type === 'm3u-movies') {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Movies</h2>
+          <p className="text-slate-400">M3U VOD support coming soon</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (route.type === 'm3u-series') {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Series</h2>
+          <p className="text-slate-400">M3U Series support coming soon</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show portals page if no active portal
   if (!activePortal || route.type === 'portals') {

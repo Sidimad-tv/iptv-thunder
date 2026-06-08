@@ -77,6 +77,7 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
       }));
   }, [recentLiveItems]);
   const hasResumedRef = useRef(false);
+  const hasEverPlayedRef = useRef(false);
   const urlChangeIdRef = useRef(0);
 
   // Cleanup on unmount and before page unload - empty deps to run once
@@ -94,6 +95,7 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
   useEffect(() => {
     const { cleanup, loadUrl, getRankedUrls, setStreamState, setStatusMsg } = mpv;
     hasResumedRef.current = false;
+    hasEverPlayedRef.current = false;
 
     const requestId = ++urlChangeIdRef.current;
 
@@ -122,6 +124,13 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
       urlChangeIdRef.current++;
     };
   }, [url]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Track whether playback has ever started (to keep poster only on initial load)
+  useEffect(() => {
+    if (mpv.streamState === 'playing') {
+      hasEverPlayedRef.current = true;
+    }
+  }, [mpv.streamState]);
 
   // Simple URL list
   const allUrls = useMemo(() => [url], [url]);
@@ -208,6 +217,12 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
   const handlePip = useCallback(() => void controls.handlePip(), [controls.handlePip]);
   const handleSeekToBeginning = useCallback(() => void controls.seekTo(0, mpv.duration), [controls.seekTo, mpv.duration]);
 
+  // Poster only on first connecting (before first playback ever starts)
+  const showPoster = mpv.streamState === 'connecting' && !hasEverPlayedRef.current;
+  // Small notification banner during retry/stall after playback has started
+  const showRetryBanner = hasEverPlayedRef.current && (mpv.streamState === 'retrying' || mpv.streamState === 'stalled');
+  const showConnectingBanner = hasEverPlayedRef.current && mpv.streamState === 'connecting';
+
   return (
     <main
       className={`fixed z-50 flex items-center justify-center ${controls.isFullscreen ? 'inset-0' : 'left-0 right-0 bottom-0'}`}
@@ -249,19 +264,31 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
         )}
 
         <div className="flex-1 relative overflow-hidden" style={{ background: 'transparent' }}>
+          {/* Watermark — shown when playing */}
           {mpv.streamState === 'playing' && (
-            <div className="absolute bottom-4 right-4 z-10 opacity-50 pointer-events-none">
+            <div className="absolute top-4 left-4 z-10 opacity-60 pointer-events-none">
               <img
                 src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
                 alt="S!d!m@dtv-STB"
-                className="w-12 h-12 object-contain"
+                className="w-20 h-20 object-contain animate-spin"
+                style={{ animationDuration: '6s' }}
               />
             </div>
           )}
 
-          {mpv.isLoading && (
+          {/* Poster — full-screen splash on initial load only (before first play ever) */}
+          {showPoster && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4"
               style={{ background: 'rgba(0,0,0,0.85)' }}>
+              <button
+                onClick={handleClosePlayer}
+                className="absolute top-4 left-4 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
               <img
                 src="https://cdn.jsdelivr.net/gh/Sidimadtv/all/sidi/assets/images/logo.png"
                 alt="S!d!m@dtv-STB"
@@ -278,6 +305,19 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
             </div>
           )}
 
+          {/* Reconnecting banner — thin translucent bar at top during retry/buffer after playback started */}
+          {(showRetryBanner || showConnectingBanner) && (
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center gap-2 px-4 py-2"
+              style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.75), transparent)' }}>
+              <svg className="animate-spin" style={{ width: 14, height: 14 }} viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#333" strokeWidth="2" />
+                <path d="M12 2 A10 10 0 0 1 22 12" stroke="#D85A30" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <span className="text-yellow-400 text-xs font-medium">{mpv.statusMsg || 'Reconnecting…'}</span>
+            </div>
+          )}
+
+          {/* Dead state */}
           {mpv.streamState === 'dead' && (
             <DeadState
               errorMsg={mpv.errorMsg}

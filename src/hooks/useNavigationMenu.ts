@@ -7,6 +7,7 @@ interface UseNavigationMenuProps {
   activePortal: any;
   navigate: (view: SimpleRoute) => void;
   setIsSettingsOpen: (open: boolean) => void;
+  activeM3uId?: string | null;
 }
 
 export const useNavigationMenu = ({
@@ -14,8 +15,10 @@ export const useNavigationMenu = ({
   activePortal,
   navigate,
   setIsSettingsOpen,
+  activeM3uId,
 }: UseNavigationMenuProps) => {
   const { t } = useTranslation();
+  const m3uId = activeM3uId ?? null;
 
   return useMemo(() => [
     {
@@ -23,9 +26,7 @@ export const useNavigationMenu = ({
       label: t('managePortals'),
       icon: '🌐',
       active: activeView === 'portals',
-      onClick: () => {
-        navigate({ type: 'portals' });
-      },
+      onClick: () => navigate({ type: 'portals' }),
     },
     {
       id: 'for-you',
@@ -117,11 +118,56 @@ export const useNavigationMenu = ({
       ],
     },
     {
+      id: 'm3u',
+      label: 'M3U Playlists',
+      icon: '📺',
+      active: activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series',
+      onClick: () => navigate({ type: 'm3u' }),
+      subItems: m3uId ? [
+        { id: 'm3u-channels', label: t('channels'), onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-channels' },
+        { id: 'm3u-movies', label: t('movies'), onClick: () => navigate({ type: 'm3u-movies' }), active: activeView === 'm3u-movies' },
+        { id: 'm3u-series', label: t('series'), onClick: () => navigate({ type: 'm3u-series' }), active: activeView === 'm3u-series' },
+      ] : undefined,
+    },
+    {
+      id: 'scb',
+      label: 'SCB',
+      icon: '📺',
+      active: activeView === 'scb1' || activeView === 'scb2' || activeView === 'scb3',
+      subItems: [
+        {
+          id: 'scb1',
+          label: 'SCB 1',
+          onClick: () => navigate({ type: 'scb1' }),
+          active: activeView === 'scb1',
+        },
+        {
+          id: 'scb2',
+          label: 'SCB 2',
+          onClick: () => navigate({ type: 'scb2' }),
+          active: activeView === 'scb2',
+        },
+        {
+          id: 'scb3',
+          label: 'SCB 3',
+          onClick: () => navigate({ type: 'scb3' }),
+          active: activeView === 'scb3',
+        },
+      ],
+    },
+    {
+      id: 'imdb',
+      label: 'IMDb',
+      icon: '🎬',
+      active: activeView === 'imdb',
+      onClick: () => navigate({ type: 'imdb' }),
+    },
+    {
       id: 'settings',
       label: t('settings'),
       icon: '⚙️',
       active: false,
       onClick: () => setIsSettingsOpen(true),
     },
-  ], [activeView, activePortal, navigate, setIsSettingsOpen, t]);
+  ], [activeView, activePortal, navigate, setIsSettingsOpen, t, m3uId]);
 };

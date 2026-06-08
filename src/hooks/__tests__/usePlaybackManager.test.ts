@@ -109,7 +109,7 @@ describe('usePlaybackManager - handleEpisodeEnded', () => {
     mockAddRecentViewed.mockResolvedValue(undefined);
     mockUseTranslation.mockReturnValue({
       t: mockT,
-      currentLang: 'pl',
+      currentLang: 'en',
       changeLanguage: jest.fn(),
       isLoading: false,
     } as any);

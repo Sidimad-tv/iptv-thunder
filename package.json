@@ -1,5 +1,5 @@
 {
-  "name": "IPTV Thunder",
+  "name": "sidimadtv-stb",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -38,6 +38,7 @@
     "@tauri-apps/plugin-sql": "^2.4.0",
     "@tauri-apps/plugin-store": "^2.4.3",
     "@tauri-apps/plugin-stronghold": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

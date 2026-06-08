@@ -9,6 +9,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { StalkerClient } from '@/lib/stalkerAPI_new';
 import { usePortalsStore } from '@/store/portals.store';
+import { useM3uStore } from '@/store/m3u.store';
 import { useAppStore } from '@/store/app.store';
 import { useTVNavigation } from '@/hooks';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -62,6 +63,7 @@ function AppInner() {
   const activePortal = usePortalsStore(s =>
     s.portals.find(p => p.id === s.activePortalId) ?? null
   );
+  const activeM3uId = useM3uStore(s => s.activeM3uId);
 
   const isFullscreen = useAppStore(s => s.isFullscreen);
 
@@ -132,6 +134,7 @@ function AppInner() {
   const navigationItems = useNavigationMenu({
     activeView,
     activePortal,
+    activeM3uId,
     navigate,
     setIsSettingsOpen,
   });

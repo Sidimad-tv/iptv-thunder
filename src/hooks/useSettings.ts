@@ -68,6 +68,17 @@ export interface AppSettings {
 
   // Content filtering
   hideAdultCategories: boolean;
+
+  // MPV player config
+  mpvCacheSecs: number;
+  mpvNetworkTimeout: number;
+  mpvDemuxerReadahead: number;
+  mpvStreamBufferSize: string;
+  mpvReconnectDelayMax: number;
+  mpvEnableHwdec: boolean;
+
+  // Theme preset
+  themePreset: 'sfvp' | 'oled' | 'ocean' | 'classic';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -89,6 +100,13 @@ const DEFAULT_SETTINGS: AppSettings = {
   hardwareAcceleration: true,
   debugMode: false,
   hideAdultCategories: false,
+  mpvCacheSecs: 30,
+  mpvNetworkTimeout: 120,
+  mpvDemuxerReadahead: 5,
+  mpvStreamBufferSize: '8M',
+  mpvReconnectDelayMax: 10,
+  mpvEnableHwdec: true,
+  themePreset: 'sfvp',
 };
 
 /**
@@ -137,19 +155,13 @@ export async function getSetting<K extends keyof AppSettings>(
   if (key === 'language') {
     const browserLang = navigator.language?.toLowerCase() || 'en';
     let detectedLang: SupportedLanguage;
-    if (browserLang.startsWith('pl')) {
-      detectedLang = 'pl';
-    } else if (browserLang.startsWith('cs')) {
-      detectedLang = 'cs';
-    } else if (browserLang.startsWith('sk')) {
-      detectedLang = 'sk';
-    } else if (browserLang.startsWith('be')) {
-      detectedLang = 'be';
-    } else if (browserLang.startsWith('de')) {
-      detectedLang = 'de';
-    } else {
-      detectedLang = 'en';
-    }
+      if (browserLang.startsWith('fr')) {
+        detectedLang = 'fr';
+      } else if (browserLang.startsWith('ar')) {
+        detectedLang = 'ar';
+      } else {
+        detectedLang = 'en';
+      }
     if (store) {
       await store.set(key, detectedLang);
       await store.save();

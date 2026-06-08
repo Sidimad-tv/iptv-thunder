@@ -111,7 +111,7 @@ describe('SeriesList', () => {
 
     mockUseTranslation.mockReturnValue({
       t: (key: string) => key,
-      language: 'pl',
+      language: 'en',
     } as any);
 
     mockUsePortalsStore.mockReturnValue({

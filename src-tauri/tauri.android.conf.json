@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "IPTV Thunder",
+  "productName": "S!d!m@dtv-STB",
   "version": "0.1.0",
   "identifier": "com.iptv.tauri",
   "build": {

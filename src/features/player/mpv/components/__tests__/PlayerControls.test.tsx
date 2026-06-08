@@ -72,7 +72,7 @@ describe('PlayerControls', () => {
 
     mockUseTranslation.mockReturnValue({
       t: mockT,
-      currentLang: 'pl',
+      currentLang: 'en',
       changeLanguage: jest.fn(),
       isLoading: false,
     } as any);
@@ -266,7 +266,7 @@ describe('PlayerControls', () => {
 
   it('should render audio track selector when multiple audio tracks', () => {
     const tracks: Track[] = [
-      { id: '1', type: 'audio', lang: 'pl', title: 'Polish' },
+      { id: '1', type: 'audio', lang: 'en', title: 'English' },
       { id: '2', type: 'audio', lang: 'en', title: 'English' },
     ];
 
@@ -285,7 +285,7 @@ describe('PlayerControls', () => {
 
   it('should render subtitle track selector when subtitles available', () => {
     const tracks: Track[] = [
-      { id: '1', type: 'sub', lang: 'pl', title: 'Polish' },
+      { id: '1', type: 'sub', lang: 'en', title: 'English' },
     ];
 
     render(
@@ -298,6 +298,6 @@ describe('PlayerControls', () => {
     const trackButton = screen.getByTitle('trackSelection');
     fireEvent.click(trackButton);
 
-    expect(screen.getByText('pl')).toBeInTheDocument();
+    expect(screen.getByText('en')).toBeInTheDocument();
   });
 });

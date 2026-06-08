@@ -133,7 +133,7 @@ export interface WatchHistory {
 }
 
 export interface AppSettings {
-  language: 'en' | 'pl' | 'de';
+  language: 'en' | 'fr' | 'ar';
   autoConnect: boolean;
   bufferTime: number;
   mpvPath?: string;

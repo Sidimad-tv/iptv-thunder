@@ -27,9 +27,9 @@ export const useWindowControls = (): WindowControls => {
     const init = async () => {
       try {
         if (!windowRef.current) return;
-        const maximized = await windowRef.current.isMaximized();
+        const fullscreen = await windowRef.current.isFullscreen();
         if (isMounted) {
-          setIsMaximized(maximized);
+          setIsMaximized(fullscreen);
         }
       } catch {
         // Silent fail - component will use default state
@@ -42,9 +42,9 @@ export const useWindowControls = (): WindowControls => {
         const unlisten = await listen('tauri://resize', async () => {
           try {
             if (!windowRef.current) return;
-            const maximized = await windowRef.current.isMaximized();
+            const fullscreen = await windowRef.current.isFullscreen();
             if (isMounted) {
-              setIsMaximized(maximized);
+              setIsMaximized(fullscreen);
             }
           } catch {
             // Silent fail - component will continue with current state
@@ -75,17 +75,19 @@ export const useWindowControls = (): WindowControls => {
   const handleMaximize = useCallback(async () => {
     try {
       if (!windowRef.current) return;
-      if (isMaximized) {
-        await windowRef.current.unmaximize();
+      // Query actual fullscreen state instead of relying on possibly stale React state
+      const currentlyFullscreen = await windowRef.current.isFullscreen();
+      if (currentlyFullscreen) {
+        await windowRef.current.setFullscreen(false);
         setIsMaximized(false);
       } else {
-        await windowRef.current.maximize();
+        await windowRef.current.setFullscreen(true);
         setIsMaximized(true);
       }
     } catch {
       // Silent fail - user can try again
     }
-  }, [isMaximized]);
+  }, []);
 
   const handleMinimize = useCallback(async () => {
     try {

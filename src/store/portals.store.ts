@@ -46,6 +46,8 @@ interface PortalsState {
   setExternalEpgUrl: (url: string | null) => void;
   setSelectedEpgService: (serviceId: string | null) => void;
   getEffectiveEpgUrl: () => string | null;
+  deduplicatePortals: () => void;
+  removeNonWorkingPortals: () => void;
 }
 
 export const usePortalsStore = create<PortalsState>()(
@@ -183,6 +185,49 @@ export const usePortalsStore = create<PortalsState>()(
         set((state) => {
           state.selectedEpgService = serviceId;
         });
+      },
+
+      deduplicatePortals: () => {
+        set((state) => {
+          // Group portals by URL, keep at most 4 per URL (sorted by updatedAt desc)
+          const byUrl = new Map<string, PortalAccount[]>();
+          for (const p of state.portals) {
+            const group = byUrl.get(p.portalUrl) || [];
+            group.push(p);
+            byUrl.set(p.portalUrl, group);
+          }
+          const toRemove: string[] = [];
+          for (const [, group] of byUrl) {
+            if (group.length <= 4) continue;
+            group.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+            // Keep first 4, remove the rest
+            for (let i = 4; i < group.length; i++) {
+              toRemove.push(group[i].id);
+            }
+          }
+          if (toRemove.length > 0) {
+            state.portals = state.portals.filter((p) => !toRemove.includes(p.id));
+            logger.debug(`🧹 Removed ${toRemove.length} portal(s) — kept max 4 per URL`);
+          }
+        });
+      },
+
+      removeNonWorkingPortals: () => {
+        const { portals, activePortalId } = get();
+        const toKeep = portals.filter((p) => {
+          const isTest = /test|demo|sample/i.test(p.name);
+          const is3tv = p.portalUrl.includes('3tv.pro');
+          return !isTest && !is3tv;
+        });
+        if (toKeep.length < portals.length) {
+          set((state) => {
+            state.portals = toKeep;
+            if (activePortalId && !toKeep.some((p) => p.id === activePortalId)) {
+              state.activePortalId = null;
+            }
+          });
+          logger.debug(`🧹 Removed ${portals.length - toKeep.length} non-working/test portal(s)`);
+        }
       },
 
       getEffectiveEpgUrl: () => {

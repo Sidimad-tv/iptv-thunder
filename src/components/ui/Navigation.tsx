@@ -7,7 +7,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { exit } from '@tauri-apps/plugin-process';
 import { invoke } from '@tauri-apps/api/core';
 import { motion, AnimatePresence } from 'framer-motion';
-import packageJson from '../../../package.json';
 
 // Detect Android platform
 const isAndroid = () => {
@@ -252,12 +251,9 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
           className="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all duration-200 dark:bg-slate-800/30 bg-gray-100/30 dark:text-slate-400 text-slate-600 dark:hover:bg-red-500/10 hover:bg-red-500/10 dark:hover:text-red-400 hover:text-red-400"
         >
           <Power className="w-4 md:w-5 h-4 md:h-5" />
-          <span className="text-sm md:text-base font-medium dark:text-white text-slate-900">{t('exit') || 'Wyjdź'}</span>
+          <span className="text-sm md:text-base font-medium dark:text-white text-slate-900">{t('exit')}</span>
         </motion.button>
 
-        <div className="text-center py-2 md:py-3">
-          <p className="text-xs md:text-sm dark:text-slate-500 text-slate-400">v{packageJson.version}</p>
-        </div>
       </div>
     </div>
   );

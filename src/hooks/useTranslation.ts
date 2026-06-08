@@ -24,7 +24,7 @@ export const useTranslation = () => {
     const loadLanguage = async () => {
       try {
         const savedLang = await getSetting('language');
-        if (savedLang && ['pl', 'en', 'cs', 'sk', 'be', 'de'].includes(savedLang)) {
+        if (savedLang && ['en', 'fr', 'ar'].includes(savedLang)) {
           setCurrentLang(savedLang);
           globalLanguage = savedLang;
         }
@@ -46,7 +46,7 @@ export const useTranslation = () => {
   }, []);
 
   const t = useCallback((key: TranslationKey, values?: Record<string, string | number>): string => {
-    let text: string = translations[currentLang][key] || translations['pl'][key] || key;
+    let text: string = translations[currentLang]?.[key] || translations['en']?.[key] || key;
     if (values) {
       Object.entries(values).forEach(([k, v]) => {
         text = text.replaceAll(`{{${k}}}`, String(v));

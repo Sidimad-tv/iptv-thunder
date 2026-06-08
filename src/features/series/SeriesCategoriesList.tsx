@@ -113,15 +113,15 @@ export const SeriesCategoriesList: React.FC<SeriesCategoriesListProps> = ({
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center dark:text-white text-slate-900 max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
-          <h3 className="text-xl font-semibold mb-2">Błąd ładowania kategorii</h3>
+          <h3 className="text-xl font-semibold mb-2">{t('categoryLoadError')}</h3>
           <p className="dark:text-slate-400 text-slate-600 mb-4">
-            Nie udało się pobrać kategorii seriali z portalu. Spróbuj ponownie.
+            {t('errorLoadingChannelCategoriesDesc')}
           </p>
           <button
             onClick={() => refetch()}
             className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
           >
-            Spróbuj ponownie
+            {t('tryAgain')}
           </button>
         </div>
       </div>
@@ -134,12 +134,12 @@ export const SeriesCategoriesList: React.FC<SeriesCategoriesListProps> = ({
         <div className="text-center dark:text-white text-slate-900">
           <div className="text-6xl mb-4">📺</div>
           <h3 className="text-xl font-semibold mb-2">
-            {search ? 'Nie znaleziono kategorii' : 'Brak kategorii'}
+            {search ? t('noResults') : t('noResults')}
           </h3>
           <p className="dark:text-slate-400 text-slate-600">
             {search
-              ? `Nie znaleziono kategorii seriali pasujących do "${search}"`
-              : 'Ten portal nie ma zdefiniowanych kategorii seriali'
+              ? `No series categories matching "${search}"`
+              : 'This portal has no series categories defined'
             }
           </p>
         </div>
@@ -155,11 +155,11 @@ export const SeriesCategoriesList: React.FC<SeriesCategoriesListProps> = ({
           <h1 className="text-[calc(1.25rem*var(--ui-scale))] font-bold dark:text-white text-slate-900">{t('seriesCategories')}</h1>
         </div>
         <p className="text-sm dark:text-slate-400 text-slate-600">
-          {t('selectSeriesCategory')} ({finalCategories.length} kategorii)
+          {t('selectSeriesCategory')} ({finalCategories.length} categories)
         </p>
         {search && (
           <p className="text-green-700 text-sm mt-2">
-            Wyniki wyszukiwania dla: "{search}"
+            Search results for: "{search}"
           </p>
         )}
       </div>
@@ -195,8 +195,8 @@ export const SeriesCategoriesList: React.FC<SeriesCategoriesListProps> = ({
                 </h3>
                 <p className="dark:text-slate-400 text-slate-600">
                   {selectedCategory.id === '*' 
-                    ? 'Wybrano wszystkie seriale' 
-                    : `Wybrano kategorię seriali #${selectedCategory.id}`
+                    ? 'All series selected' 
+                    : `Series category #${selectedCategory.id} selected`
                   }
                 </p>
               </div>
@@ -205,7 +205,7 @@ export const SeriesCategoriesList: React.FC<SeriesCategoriesListProps> = ({
                 className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors flex items-center gap-2"
               >
                 <span>📺</span>
-                Pokaż seriale
+                Show Series
               </button>
             </div>
           </div>

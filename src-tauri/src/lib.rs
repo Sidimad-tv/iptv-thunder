@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use tauri::Manager;
 use std::sync::{LazyLock, Mutex};
 use std::collections::HashMap;
 use tokio::sync::oneshot;
@@ -269,8 +270,121 @@ async fn fetch_image(url: String, timeout: u64) -> Result<serde_json::Value, Str
 }
 
 #[tauri::command]
+async fn fetch_url(url: String) -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .user_agent("Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG250 Safari/533.3")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client
+        .get(&url)
+        .header("Accept", "application/json, text/plain, */*")
+        .header("Accept-Language", "en-US,en;q=0.9")
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {e}"))?;
+
+    resp.text().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn check_mpv_available() -> Result<bool, String> {
     Ok(true)
+}
+
+#[tauri::command]
+async fn export_portals(_app_handle: tauri::AppHandle, data: String, export_type: String) -> Result<String, String> {
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    // Save to Downloads folder
+    let downloads = PathBuf::from(
+        std::env::var("USERPROFILE").unwrap_or_else(|_| ".".to_string())
+    ).join("Downloads");
+    std::fs::create_dir_all(&downloads).map_err(|e| e.to_string())?;
+
+    // Format: S!d!m@dtv-STB-{type}-YYYY-MM-DD-HHMM.json
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let days = secs / 86400;
+    let time_secs = secs % 86400;
+    let hours = time_secs / 3600;
+    let mins = (time_secs % 3600) / 60;
+
+    // Approximate date calculation from epoch
+    let mut y = 1970i64;
+    let mut remaining = days as i64;
+    loop {
+        let days_in_year = if (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0) { 366 } else { 365 };
+        if remaining < days_in_year { break; }
+        remaining -= days_in_year;
+        y += 1;
+    }
+    let month_days = if (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0) {
+        [31,29,31,30,31,30,31,31,30,31,30,31]
+    } else {
+        [31,28,31,30,31,30,31,31,30,31,30,31]
+    };
+    let mut m = 1usize;
+    for &md in &month_days {
+        if remaining < md { break; }
+        remaining -= md;
+        m += 1;
+    }
+    let d = remaining + 1;
+
+    let ftype = if export_type == "m3u" { "M3U" } else { "MAC" };
+    let filename = format!("S!d!m@dtv-STB-{ftype}-{y:04}-{m:02}-{d:02}-{hours:02}{mins:02}.json");
+    let path = downloads.join(&filename);
+
+    std::fs::write(&path, &data).map_err(|e| e.to_string())?;
+
+    // Open folder containing the file
+    let _ = std::process::Command::new("explorer")
+        .arg("/select,")
+        .arg(&path)
+        .spawn();
+
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+async fn run_updater(app_handle: tauri::AppHandle) -> Result<(), String> {
+    // Try resource dir first (bundled resource)
+    let resource_path = app_handle
+        .path()
+        .resource_dir()
+        .map_err(|e| e.to_string())?;
+    let updater_path = resource_path.join("exec").join("update.exe");
+
+    // If not found at resource dir, try alongside the executable
+    let updater_path = if updater_path.exists() {
+        updater_path
+    } else {
+        let exe_dir = std::env::current_exe()
+            .map_err(|e| e.to_string())?
+            .parent()
+            .ok_or("No parent directory")?
+            .to_path_buf();
+        let fallback = exe_dir.join("update.exe");
+        if fallback.exists() {
+            fallback
+        } else {
+            return Err("update.exe not found. Please ensure the updater is bundled with the application or placed alongside the executable.".to_string());
+        }
+    };
+
+    let current_ver = app_handle.package_info().version.to_string();
+
+    std::process::Command::new(&updater_path)
+        .arg(&current_ver)
+        .spawn()
+        .map_err(|e| format!("Failed to launch updater: {}", e))?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -345,7 +459,9 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_os::init());
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build());
 
     builder
         .invoke_handler(tauri::generate_handler![
@@ -353,7 +469,10 @@ pub fn run() {
             cancel_request,
             fetch_image,
             check_mpv_available,
-            fetch_epg_gz
+            fetch_epg_gz,
+            run_updater,
+            export_portals,
+            fetch_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
