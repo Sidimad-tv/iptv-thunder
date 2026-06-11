@@ -1,16 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { M3uAccount } from '@/features/m3u/m3u.types';
+import { M3uAccount, M3uChannel, M3uCategory } from '@/features/m3u/m3u.types';
+import { loadM3uContent } from '@/utils/m3uParser';
 import { createLogger } from '@/lib/logger';
 import { tauriStorage } from '@/lib/tauriStorage';
 const logger = createLogger('M3U');
 
+interface ChannelCache {
+  categories: M3uCategory[];
+  channels: M3uChannel[];
+  updatedAt: number;
+}
+
 interface M3uState {
   accounts: M3uAccount[];
   activeM3uId: string | null;
+  channelCache: Record<string, ChannelCache>;
 
-  // Actions
   addM3u: (data: Omit<M3uAccount, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateM3u: (id: string, updates: Partial<M3uAccount>) => void;
   deleteM3u: (id: string) => void;
@@ -18,6 +25,8 @@ interface M3uState {
   getActiveM3u: () => M3uAccount | null;
   deduplicateM3u: () => void;
   removeNonWorkingM3u: () => void;
+  loadChannels: (accountId: string) => Promise<{ categories: M3uCategory[]; channels: M3uChannel[] }>;
+  invalidateCache: (accountId: string) => void;
 }
 
 export const useM3uStore = create<M3uState>()(
@@ -25,6 +34,7 @@ export const useM3uStore = create<M3uState>()(
     immer((set, get) => ({
     accounts: [],
     activeM3uId: null,
+    channelCache: {},
 
     addM3u: (data) => {
       set((state) => {
@@ -54,6 +64,7 @@ export const useM3uStore = create<M3uState>()(
         const idx = state.accounts.findIndex((p) => p.id === id);
         if (idx > -1) state.accounts.splice(idx, 1);
         if (state.activeM3uId === id) state.activeM3uId = null;
+        delete state.channelCache[id];
       });
     },
 
@@ -99,12 +110,32 @@ export const useM3uStore = create<M3uState>()(
         logger.debug(`Removed ${accounts.length - toKeep.length} test M3U(s)`);
       }
     },
+
+    loadChannels: async (accountId: string) => {
+      const state = get();
+      const cache = state.channelCache[accountId];
+      if (cache) return { categories: cache.categories, channels: cache.channels };
+
+      const account = state.accounts.find(a => a.id === accountId);
+      if (!account) throw new Error('Account not found');
+
+      const result = await loadM3uContent(account);
+      set((s) => {
+        s.channelCache[accountId] = { categories: result.categories, channels: result.channels, updatedAt: Date.now() };
+      });
+      return result;
+    },
+
+    invalidateCache: (accountId: string) => {
+      set((state) => { delete state.channelCache[accountId]; });
+    },
   })),
   {
     name: 'm3u-accounts',
     storage: tauriStorage,
     partialize: (state) => ({
       ...state,
+      channelCache: {},
       accounts: state.accounts.map((acct) => {
         if (acct.sourceType === 'file') return acct;
         const { channels: _ch, ...rest } = acct;

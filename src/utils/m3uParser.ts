@@ -1,17 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { M3uChannel, M3uContentType, M3uCategory } from '@/features/m3u/m3u.types';
 
-interface M3uParseResult {
-  categories: M3uCategory[];
-  contents: M3uChannel[];
-  sorted_channels: Record<string, number[]>;
-}
-
-/** Lightweight result from cached Rust parser — only categories, no channel data */
-export interface M3uCategoriesResult {
-  cache_key: string;
-  categories: M3uCategory[];
-  total_channels: number;
+let isTauriEnv: boolean | null = null;
+function checkTauri(): boolean {
+  if (isTauriEnv === null) isTauriEnv = !!(window as any).__TAURI_INTERNALS__;
+  return isTauriEnv;
 }
 
 function classifyContentType(group: string, tvgType?: string): M3uChannel['contentType'] {
@@ -22,8 +15,8 @@ function classifyContentType(group: string, tvgType?: string): M3uChannel['conte
   return 'live';
 }
 
-/** JS-only parser — kept as last resort fallback only */
-export function parseM3u(content: string): M3uChannel[] {
+/** Parse raw M3U text */
+export function parseM3uLines(content: string): M3uChannel[] {
   const channels: M3uChannel[] = [];
   const lines = content.split('\n');
   let currentExtinf: string | null = null;
@@ -31,11 +24,10 @@ export function parseM3u(content: string): M3uChannel[] {
     const line = raw.trim();
     if (!line) continue;
     if (line.startsWith('#EXTINF:')) { currentExtinf = line; continue; }
-    if (line.startsWith('#EXTVLCOPT:')) continue;
-    if (line.startsWith('#')) continue;
+    if (line.startsWith('#EXTVLCOPT:') || line.startsWith('#KODIPROP:')) continue;
+    if (line.startsWith('#')) { currentExtinf = null; continue; }
     if (currentExtinf && (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('rtmp://') || line.startsWith('rtsp://'))) {
-      const n = currentExtinf.match(/,(.+)$/);
-      const name = n ? n[1].trim() : 'Unknown';
+      const name = (currentExtinf.match(/,(.+)$/) || [])[1]?.trim() || 'Unknown';
       const logo = (currentExtinf.match(/tvg-logo="([^"]*)"/i) || [])[1] || '';
       const group = (currentExtinf.match(/group-title="([^"]*)"/i) || [])[1] || 'Uncategorized';
       const tvgType = (currentExtinf.match(/tvg-type="([^"]*)"/i) || [])[1] || '';
@@ -46,161 +38,149 @@ export function parseM3u(content: string): M3uChannel[] {
   return channels;
 }
 
-/**
- * Fetch and parse M3U in Rust — returns LIGHT categories-only result.
- * Full channel data stays cached in Rust for on-demand group loading.
- */
-export async function fetchAndParse(url: string): Promise<M3uCategoriesResult> {
-  // Attempt 1: Rust fetch-and-parse (fully in backend)
-  try {
-    const result = await invoke<M3uCategoriesResult>('fetch_and_parse_m3u', { url, urlOverride: null });
-    if (result && result.cache_key) return result;
-  } catch { /* fall through */ }
-
-  // Attempt 2: Rust fetch + Rust parse
-  try {
-    const content = await invoke<string>('fetch_url', { url });
-    const result = await invoke<M3uCategoriesResult>('parse_m3u_text', { content, cacheKeyHint: null });
-    if (result && result.cache_key) return result;
-  } catch { /* fall through */ }
-
-  // Attempt 3: browser fetch + Rust parse
-  try {
-    const resp = await fetch('/api/proxy?url=' + encodeURIComponent(url));
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const content = await resp.text();
-    const result = await invoke<M3uCategoriesResult>('parse_m3u_text', { content, cacheKeyHint: null });
-    if (result && result.cache_key) return result;
-  } catch { /* fall through */ }
-
-  throw new Error('Failed to load M3U playlist');
-}
-
-/**
- * Legacy: fetch + return all channels as flat array (may be slow for large playlists)
- */
-export async function fetchM3uChannels(url: string): Promise<M3uChannel[]> {
-  try {
-    const full = await invoke<M3uParseResult>('fetch_and_parse_m3u', { url, urlOverride: null });
-    return full?.contents ?? [];
-  } catch {
-    try {
-      const content = await invoke<string>('fetch_url', { url });
-      const full = await invoke<M3uParseResult>('parse_m3u_text', { content, cacheKeyHint: null });
-      return full?.contents ?? [];
-    } catch {
-      try {
-        const resp = await fetch('/api/proxy?url=' + encodeURIComponent(url));
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const content = await resp.text();
-        return parseM3u(content);
-      } catch {
-        throw new Error('Failed to fetch M3U playlist');
-      }
-    }
-  }
-}
-
-/** Load channels for a specific group from the Rust-side M3U cache */
-export async function getM3uGroupChannels(cacheKey: string, groupId: string): Promise<M3uChannel[]> {
-  return await invoke<M3uChannel[]>('get_m3u_group_channels', { cacheKey, groupId });
-}
-
-/** Clear the Rust-side M3U parse cache */
-export async function clearM3uCache(): Promise<void> {
-  try { await invoke('clear_m3u_cache'); } catch { /* ignore */ }
-}
-
-/** Parse raw M3U text in Rust backend (legacy full return) */
-export async function parseM3uText(content: string): Promise<M3uChannel[]> {
-  try {
-    const result = await invoke<M3uParseResult>('parse_m3u_text', { content, cacheKeyHint: null });
-    if (result?.contents) return result.contents;
-  } catch { /* fall through */ }
-  return parseM3u(content);
-}
-
-/** Parse raw M3U text, returns categorized structure (legacy) */
-export async function parseM3uTextCategorized(content: string): Promise<M3uParseResult> {
-  try {
-    return await invoke<M3uParseResult>('parse_m3u_text', { content, cacheKeyHint: null });
-  } catch {
-    const channels = parseM3u(content);
-    return buildCategorized(channels);
-  }
-}
-
-function buildCategorized(channels: M3uChannel[]): M3uParseResult {
-  const groupMap = new Map<string, number[]>();
-  const contents: M3uChannel[] = [];
-  for (const [idx, ch] of channels.entries()) {
+function buildCategorized(channels: M3uChannel[]): { categories: M3uCategory[]; channels: M3uChannel[] } {
+  const groupMap = new Map<string, M3uChannel[]>();
+  for (const ch of channels) {
     const g = ch.group || 'Uncategorized';
     if (!groupMap.has(g)) groupMap.set(g, []);
-    groupMap.get(g)!.push(idx);
-    contents.push({ ...ch, tv_genre_id: `cat-${g}`, number: idx + 1 });
+    groupMap.get(g)!.push(ch);
   }
-  const categories: Array<{ id: string; title: string }> = [{ id: '*', title: 'All' }];
-  const sorted_channels: Record<string, number[]> = {};
-  for (const [groupName, indices] of [...groupMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-    const catId = `cat-${groupName}`;
-    categories.push({ id: catId, title: groupName });
-    sorted_channels[catId] = indices;
+  const categories: M3uCategory[] = [{ id: '*', title: 'All' }];
+  for (const [g] of [...groupMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    categories.push({ id: `cat-${g}`, title: g });
   }
-  return { categories, contents, sorted_channels };
+  return { categories, channels };
 }
 
-/** Read local M3U file → parse in Rust → return categories result */
-export async function parseM3uFileCategorized(file: File): Promise<M3uCategoriesResult> {
-  const text = await file.text();
+/** Detect Xtream credentials from M3U URL like get.php?username=X&password=Y */
+export function detectXtreamUrl(url: string): { server: string; username: string; password: string } | null {
+  const m = url.match(/(https?:\/\/[^/]+)\/get\.php\?username=([^&]*)&password=([^&]*)/i);
+  return m ? { server: m[1], username: m[2], password: m[3] } : null;
+}
+
+/** Fetch Xtream API data */
+async function fetchXtreamApi(server: string, username: string, password: string, action: string): Promise<any[]> {
+  const base = server.replace(/\/+$/, '');
+  const url = `${base}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=${action}`;
+  let text: string;
+  if (checkTauri()) {
+    text = await invoke<string>('fetch_url', { url });
+  } else {
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    text = await r.text();
+  }
+  const data = JSON.parse(text);
+  return Array.isArray(data) ? data : [];
+}
+
+async function fetchM3uContent(url: string): Promise<string> {
+  const timeoutMs = 15000;
+  if (checkTauri()) {
+    const result = await invoke<{ cache_key: string; categories: any[]; total_channels: number; contents: any[]; sorted_channels: any }>('fetch_and_parse_m3u', { url, urlOverride: null });
+    // Return raw-ish — the Rust result has categories+channels, so rebuild
+    const channels: M3uChannel[] = (result.contents || []).map((c: any, i: number) => ({
+      id: c.id || `m3u-${i}`,
+      name: c.name || 'Unknown',
+      logo: c.logo || '',
+      group: c.group || 'Uncategorized',
+      streamUrl: c.streamUrl || c.stream_url || '',
+      contentType: (c.contentType || c.content_type || 'live') as M3uContentType,
+    }));
+    const { categories, channels: catChannels } = buildCategorized(channels);
+    return JSON.stringify({ categories, channels: catChannels });
+  }
+  // Browser mode: direct fetch
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await invoke<M3uCategoriesResult>('parse_m3u_text', { content: text, cacheKeyHint: null });
-  } catch {
-    const channels = parseM3u(text);
-    const built = buildCategorized(channels);
-    return {
-      cache_key: `file-${file.name}-${Date.now()}`,
-      categories: built.categories,
-      total_channels: channels.length,
-    };
+    const r = await fetch(url, { signal: controller.signal, headers: { 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.text();
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-/** Read local M3U file → parse in Rust */
-export async function parseM3uFile(file: File): Promise<M3uChannel[]> {
-  const text = await file.text();
-  return parseM3uText(text);
+export interface M3uLoadResult {
+  categories: M3uCategory[];
+  channels: M3uChannel[];
 }
 
-export async function fetchXtreamChannels(
-  serverUrl: string, username: string, password: string
-): Promise<{ name: string; channels: M3uChannel[] }> {
-  const base = serverUrl.replace(/\/+$/, '');
-  const url = `${base}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_live_streams`;
-  let content: string;
-  try {
-    content = await invoke<string>('fetch_url', { url });
-  } catch {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    content = await resp.text();
-  }
+/** Legacy: parse raw text */
+export async function parseM3uText(content: string): Promise<M3uChannel[]> {
+  return parseM3uLines(content);
+}
 
-  let data: any[];
-  try {
-    data = JSON.parse(content);
-  } catch {
-    throw new Error('Invalid response from Xtream API');
-  }
+/** Legacy: fetch all channels */
+export async function fetchM3uChannels(url: string): Promise<M3uChannel[]> {
+  const raw = await fetchM3uContent(url);
+  return parseM3uLines(raw);
+}
 
-  if (!Array.isArray(data)) throw new Error('Invalid response');
-
+/** Legacy: fetch Xtream live channels */
+export async function fetchXtreamChannels(serverUrl: string, username: string, password: string): Promise<{ name: string; channels: M3uChannel[] }> {
+  const server = serverUrl.replace(/\/+$/, '');
+  const data = await fetchXtreamApi(server, username, password, 'get_live_streams');
   const channels: M3uChannel[] = data.map((ch: any, i: number) => ({
-    id: `xtream-${i}`,
-    name: ch.name || `Channel ${i}`,
-    logo: ch.stream_icon || '',
-    group: ch.category_name || 'Uncategorized',
-    streamUrl: `${base}/live/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${ch.stream_id}.m3u8`,
+    id: `xtream-${i}`, name: ch.name || `Channel ${i}`, logo: ch.stream_icon || '',
+    group: ch.category_name || 'Uncategorized', streamUrl: `${server}/live/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${ch.stream_id}.m3u8`, contentType: 'live' as M3uContentType,
   }));
-
   return { name: `Xtream (${channels.length} channels)`, channels };
+}
+
+/** Load M3U content: detect Xtream URL → Xtream API, else parse M3U text */
+export async function loadM3uContent(account: { url?: string; sourceType: string; serverUrl?: string; username?: string; password?: string; channels?: M3uChannel[] }): Promise<M3uLoadResult> {
+  // File source: use saved channels
+  if (account.sourceType === 'file' && account.channels?.length) {
+    return buildCategorized(account.channels);
+  }
+
+  // Xtream source type
+  if (account.sourceType === 'xtream' && account.serverUrl && account.username && account.password) {
+    const server = account.serverUrl.replace(/\/+$/, '');
+    try {
+      const [liveData, vodData, seriesData] = await Promise.all([
+        fetchXtreamApi(server, account.username, account.password, 'get_live_streams').catch(() => []),
+        fetchXtreamApi(server, account.username, account.password, 'get_vod_streams').catch(() => []),
+        fetchXtreamApi(server, account.username, account.password, 'get_series').catch(() => []),
+      ]);
+      const channels: M3uChannel[] = [
+        ...liveData.map((ch: any, i: number) => ({ id: `xtream-live-${i}`, name: ch.name || `Channel ${i}`, logo: ch.stream_icon || '', group: ch.category_name || 'Live', streamUrl: `${server}/live/${encodeURIComponent(account.username!)}/${encodeURIComponent(account.password!)}/${ch.stream_id}.m3u8`, contentType: 'live' as M3uContentType })),
+        ...vodData.map((ch: any, i: number) => ({ id: `xtream-vod-${i}`, name: ch.name || `Movie ${i}`, logo: ch.stream_icon || '', group: ch.category_name || 'Movies', streamUrl: `${server}/movie/${encodeURIComponent(account.username!)}/${encodeURIComponent(account.password!)}/${ch.stream_id}.${ch.container_extension || 'mp4'}`, contentType: 'movie' as M3uContentType })),
+        ...seriesData.map((ch: any, i: number) => ({ id: `xtream-series-${i}`, name: ch.name || `Series ${i}`, logo: ch.cover || ch.stream_icon || '', group: ch.category_name || 'Series', streamUrl: `${server}/series/${encodeURIComponent(account.username!)}/${encodeURIComponent(account.password!)}/${ch.series_id}.m3u8`, contentType: 'series' as M3uContentType })),
+      ];
+      return buildCategorized(channels);
+    } catch (e) {
+      throw new Error(`Xtream API error: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  // URL source: detect Xtream URL or parse M3U
+  if (account.url) {
+    // Detect Xtream-style URL
+    const xtream = detectXtreamUrl(account.url);
+    if (xtream) {
+      try {
+        const [liveData, vodData, seriesData] = await Promise.all([
+          fetchXtreamApi(xtream.server, xtream.username, xtream.password, 'get_live_streams').catch(() => []),
+          fetchXtreamApi(xtream.server, xtream.username, xtream.password, 'get_vod_streams').catch(() => []),
+          fetchXtreamApi(xtream.server, xtream.username, xtream.password, 'get_series').catch(() => []),
+        ]);
+        const channels: M3uChannel[] = [
+          ...liveData.map((ch: any, i: number) => ({ id: `xtr-live-${i}`, name: ch.name || `Channel ${i}`, logo: ch.stream_icon || '', group: ch.category_name || 'Live', streamUrl: `${xtream.server}/live/${encodeURIComponent(xtream.username)}/${encodeURIComponent(xtream.password)}/${ch.stream_id}.m3u8`, contentType: 'live' as M3uContentType })),
+          ...vodData.map((ch: any, i: number) => ({ id: `xtr-vod-${i}`, name: ch.name || `Movie ${i}`, logo: ch.stream_icon || '', group: ch.category_name || 'Movies', streamUrl: `${xtream.server}/movie/${encodeURIComponent(xtream.username)}/${encodeURIComponent(xtream.password)}/${ch.stream_id}.${ch.container_extension || 'mp4'}`, contentType: 'movie' as M3uContentType })),
+          ...seriesData.map((ch: any, i: number) => ({ id: `xtr-series-${i}`, name: ch.name || `Series ${i}`, logo: ch.cover || ch.stream_icon || '', group: ch.category_name || 'Series', streamUrl: `${xtream.server}/series/${encodeURIComponent(xtream.username)}/${encodeURIComponent(xtream.password)}/${ch.series_id}.m3u8`, contentType: 'series' as M3uContentType })),
+        ];
+        return buildCategorized(channels);
+      } catch { /* fall through to M3U parsing */ }
+    }
+
+    // M3U URL: fetch and parse
+    const raw = await fetchM3uContent(account.url);
+    const channels = parseM3uLines(raw);
+    return buildCategorized(channels);
+  }
+
+  throw new Error('No source configured');
 }
