@@ -66,7 +66,9 @@ async function fetchXtreamApi(server: string, username: string, password: string
   if (checkTauri()) {
     text = await invoke<string>('fetch_url', { url });
   } else {
-    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const proxyBase = typeof window !== 'undefined' ? window.location.origin + '/api/proxy' : '';
+    const fetchUrl = proxyBase ? `${proxyBase}?url=${encodeURIComponent(url)}` : url;
+    const r = await fetch(fetchUrl, { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     text = await r.text();
   }
@@ -77,24 +79,14 @@ async function fetchXtreamApi(server: string, username: string, password: string
 async function fetchM3uContent(url: string): Promise<string> {
   const timeoutMs = 15000;
   if (checkTauri()) {
-    const result = await invoke<{ cache_key: string; categories: any[]; total_channels: number; contents: any[]; sorted_channels: any }>('fetch_and_parse_m3u', { url, urlOverride: null });
-    // Return raw-ish — the Rust result has categories+channels, so rebuild
-    const channels: M3uChannel[] = (result.contents || []).map((c: any, i: number) => ({
-      id: c.id || `m3u-${i}`,
-      name: c.name || 'Unknown',
-      logo: c.logo || '',
-      group: c.group || 'Uncategorized',
-      streamUrl: c.streamUrl || c.stream_url || '',
-      contentType: (c.contentType || c.content_type || 'live') as M3uContentType,
-    }));
-    const { categories, channels: catChannels } = buildCategorized(channels);
-    return JSON.stringify({ categories, channels: catChannels });
+    return await invoke<string>('fetch_url', { url });
   }
-  // Browser mode: direct fetch
+  const proxyBase = typeof window !== 'undefined' && window.location.origin + '/api/proxy';
+  const fetchUrl = proxyBase ? `${proxyBase}?url=${encodeURIComponent(url)}` : url;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const r = await fetch(url, { signal: controller.signal, headers: { 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' } });
+    const r = await fetch(fetchUrl, { signal: controller.signal, headers: { 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return await r.text();
   } finally {
@@ -110,6 +102,15 @@ export interface M3uLoadResult {
 /** Legacy: parse raw text */
 export async function parseM3uText(content: string): Promise<M3uChannel[]> {
   return parseM3uLines(content);
+}
+
+/** Get the browser proxy URL if available */
+export function getProxyUrl(targetUrl: string): string {
+  if (checkTauri()) return targetUrl;
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+  }
+  return targetUrl;
 }
 
 /** Legacy: fetch all channels */
