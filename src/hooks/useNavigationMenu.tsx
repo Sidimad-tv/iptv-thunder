@@ -21,22 +21,43 @@ export const useNavigationMenu = ({
   const { t } = useTranslation();
   const m3uId = activeM3uId ?? null;
 
+  const isPortalActive = activeView === 'portals' || activeView === 'tv' || activeView === 'categories' ||
+    activeView === 'favorite-categories' || activeView === 'favorite-channels' || activeView === 'movies' ||
+    activeView === 'movie-categories' || activeView === 'favorite-movie-categories' || activeView === 'favorite-movies' ||
+    activeView === 'movie-details' || activeView === 'series' || activeView === 'series-categories' ||
+    activeView === 'favorite-series-categories' || activeView === 'favorite-series' || activeView === 'series-details';
+
+  const isM3uActive = activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series';
+
   return useMemo(() => [
     {
       id: 'portals',
-      label: t('managePortals'),
+      label: 'Portal Playlist',
       icon: <Globe className="w-5 h-5" />,
-      active: activeView === 'portals',
+      active: isPortalActive,
       onClick: () => navigate({ type: 'portals' }),
+      subItems: activePortal ? [
+        { id: 'tv', label: t('channels'), icon: <Tv className="w-4 h-4" />, onClick: () => navigate({ type: 'tv' }), active: activeView === 'tv' },
+        { id: 'categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'categories' }), active: activeView === 'categories' },
+        { id: 'favorite-channels', label: t('favoriteChannels'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-channels' }), active: activeView === 'favorite-channels' },
+        { id: 'movies', label: t('movies'), icon: <Clapperboard className="w-4 h-4" />, onClick: () => navigate({ type: 'movies' }), active: activeView === 'movies' },
+        { id: 'movie-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'movie-categories' }), active: activeView === 'movie-categories' },
+        { id: 'favorite-movies', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-movies' }), active: activeView === 'favorite-movies' },
+        { id: 'series', label: t('series'), icon: <Clapperboard className="w-4 h-4" />, onClick: () => navigate({ type: 'series' }), active: activeView === 'series' },
+        { id: 'series-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'series-categories' }), active: activeView === 'series-categories' },
+        { id: 'favorite-series', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-series' }), active: activeView === 'favorite-series' },
+      ] : undefined,
     },
     {
       id: 'm3u',
-      label: 'M3U Playlists',
+      label: 'M3U Playlist',
       icon: <ListMusic className="w-5 h-5" />,
-      active: activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series',
+      active: isM3uActive,
       onClick: () => navigate({ type: 'm3u' }),
       subItems: m3uId ? [
         { id: 'm3u-channels', label: t('channels'), icon: <Tv className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-channels' },
+        { id: 'm3u-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-categories' },
+        { id: 'm3u-favorites', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-favorites' },
         { id: 'm3u-movies', label: t('movies'), icon: <Clapperboard className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-movies' }), active: activeView === 'm3u-movies' },
         { id: 'm3u-series', label: t('series'), icon: <Clapperboard className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-series' }), active: activeView === 'm3u-series' },
       ] : undefined,
@@ -49,60 +70,7 @@ export const useNavigationMenu = ({
       disabled: !activePortal,
       onClick: () => navigate({ type: 'for-you' }),
     },
-    {
-      id: 'tv',
-      label: t('channels'),
-      icon: <Tv className="w-5 h-5" />,
-      active: activeView === 'tv' || activeView === 'categories' || activeView === 'favorite-categories' || activeView === 'favorite-channels',
-      disabled: !activePortal,
-      subItems: [
-        { id: 'categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'categories' }), active: activeView === 'categories' },
-        { id: 'favorite-categories', label: t('favoriteCategories'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-categories' }), active: activeView === 'favorite-categories' },
-        { id: 'favorite-channels', label: t('favoriteChannels'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-channels' }), active: activeView === 'favorite-channels' },
-      ],
-    },
-    {
-      id: 'movies',
-      label: t('movies'),
-      icon: <Clapperboard className="w-5 h-5" />,
-      active: activeView === 'movies' || activeView === 'movie-categories' || activeView === 'favorite-movie-categories' || activeView === 'favorite-movies' || activeView === 'movie-details',
-      disabled: !activePortal,
-      subItems: [
-        { id: 'movie-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'movie-categories' }), active: activeView === 'movie-categories' },
-        { id: 'favorite-movie-categories', label: t('favoriteCategories'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-movie-categories' }), active: activeView === 'favorite-movie-categories' },
-        { id: 'favorite-movies', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-movies' }), active: activeView === 'favorite-movies' },
-      ],
-    },
-    {
-      id: 'series',
-      label: t('series'),
-      icon: <Clapperboard className="w-5 h-5" />,
-      active: activeView === 'series' || activeView === 'series-categories' || activeView === 'favorite-series-categories' || activeView === 'favorite-series' || activeView === 'series-details',
-      disabled: !activePortal,
-      subItems: [
-        { id: 'series-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'series-categories' }), active: activeView === 'series-categories' },
-        { id: 'favorite-series-categories', label: t('favoriteCategories'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-series-categories' }), active: activeView === 'favorite-series-categories' },
-        { id: 'favorite-series', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'favorite-series' }), active: activeView === 'favorite-series' },
-      ],
-    },
-    {
-      id: 'scb',
-      label: 'SCB',
-      icon: <Tv className="w-5 h-5" />,
-      active: activeView === 'scb1' || activeView === 'scb2' || activeView === 'scb3',
-      subItems: [
-        { id: 'scb1', label: 'SCB 1', icon: <Tv className="w-4 h-4" />, onClick: () => navigate({ type: 'scb1' }), active: activeView === 'scb1' },
-        { id: 'scb2', label: 'SCB 2', icon: <Tv className="w-4 h-4" />, onClick: () => navigate({ type: 'scb2' }), active: activeView === 'scb2' },
-        { id: 'scb3', label: 'SCB 3', icon: <Tv className="w-4 h-4" />, onClick: () => navigate({ type: 'scb3' }), active: activeView === 'scb3' },
-      ],
-    },
-    {
-      id: 'imdb',
-      label: 'IMDb',
-      icon: <Clapperboard className="w-5 h-5" />,
-      active: activeView === 'imdb',
-      onClick: () => navigate({ type: 'imdb' }),
-    },
+
     {
       id: 'settings',
       label: t('settings'),
@@ -110,5 +78,5 @@ export const useNavigationMenu = ({
       active: false,
       onClick: () => setIsSettingsOpen(true),
     },
-  ], [activeView, activePortal, navigate, setIsSettingsOpen, t, m3uId]);
+  ], [activeView, activePortal, navigate, setIsSettingsOpen, t, m3uId, isPortalActive, isM3uActive]);
 };
