@@ -8,33 +8,69 @@ function checkTauri(): boolean {
 }
 
 function classifyContentType(group: string, tvgType?: string): M3uChannel['contentType'] {
-  if (tvgType && ['live', 'movie', 'series'].includes(tvgType)) return tvgType as M3uContentType;
+  if (tvgType === 'live' || tvgType === 'movie' || tvgType === 'series') return tvgType;
   const gl = group.toLowerCase();
   if (gl.includes('movie') || gl.includes('film') || gl.includes('vod') || gl.includes('cinema')) return 'movie';
   if (gl.includes('series') || gl.includes('episode') || gl.includes('season') || gl.includes('show')) return 'series';
   return 'live';
 }
 
-/** Parse raw M3U text */
+function parseOneChannel(extinf: string, line: string, idx: number): M3uChannel {
+  const commaIdx = extinf.lastIndexOf(',');
+  const name = commaIdx >= 0 ? extinf.substring(commaIdx + 1).trim() : 'Unknown';
+  let logo = '', group = 'Uncategorized', tvgType = '';
+  let pos = extinf.indexOf('tvg-logo="');
+  if (pos >= 0) { const s = pos + 10; const e = extinf.indexOf('"', s); if (e >= 0) logo = extinf.substring(s, e); }
+  pos = extinf.indexOf('group-title="');
+  if (pos >= 0) { const s = pos + 13; const e = extinf.indexOf('"', s); if (e >= 0) group = extinf.substring(s, e); }
+  pos = extinf.indexOf('tvg-type="');
+  if (pos >= 0) { const s = pos + 10; const e = extinf.indexOf('"', s); if (e >= 0) tvgType = extinf.substring(s, e); }
+  return { id: `m3u-${idx}`, name, logo, group, streamUrl: line, contentType: classifyContentType(group, tvgType) };
+}
+
+/** Parse raw M3U text in chunks, yielding to event loop every CHUNK_SIZE lines */
+const CHUNK_SIZE = 500;
+
 export function parseM3uLines(content: string): M3uChannel[] {
   const channels: M3uChannel[] = [];
   const lines = content.split('\n');
-  let currentExtinf: string | null = null;
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (!line) continue;
-    if (line.startsWith('#EXTINF:')) { currentExtinf = line; continue; }
+  let extinf = '';
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li].trim();
+    if (line.length === 0) continue;
+    if (line.startsWith('#EXTINF:')) { extinf = line; continue; }
     if (line.startsWith('#EXTVLCOPT:') || line.startsWith('#KODIPROP:')) continue;
-    if (line.startsWith('#')) { currentExtinf = null; continue; }
-    if (currentExtinf && (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('rtmp://') || line.startsWith('rtsp://'))) {
-      const name = (currentExtinf.match(/,(.+)$/) || [])[1]?.trim() || 'Unknown';
-      const logo = (currentExtinf.match(/tvg-logo="([^"]*)"/i) || [])[1] || '';
-      const group = (currentExtinf.match(/group-title="([^"]*)"/i) || [])[1] || 'Uncategorized';
-      const tvgType = (currentExtinf.match(/tvg-type="([^"]*)"/i) || [])[1] || '';
-      channels.push({ id: `m3u-${channels.length}`, name, logo, group, streamUrl: line, contentType: classifyContentType(group, tvgType) });
-      currentExtinf = null;
+    if (line.startsWith('#')) { extinf = ''; continue; }
+    if (extinf.length === 0) continue;
+    if (!line.startsWith('http://') && !line.startsWith('https://') && !line.startsWith('rtmp://') && !line.startsWith('rtsp://')) continue;
+    channels.push(parseOneChannel(extinf, line, channels.length));
+    extinf = '';
+  }
+  return channels;
+}
+
+/** Async version: yields to event loop every CHUNK_SIZE items so the browser stays responsive */
+export async function parseM3uLinesAsync(content: string, onProgress?: (count: number) => void): Promise<M3uChannel[]> {
+  const channels: M3uChannel[] = [];
+  const lines = content.split('\n');
+  let extinf = '';
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li].trim();
+    if (line.length === 0) continue;
+    if (line.startsWith('#EXTINF:')) { extinf = line; continue; }
+    if (line.startsWith('#EXTVLCOPT:') || line.startsWith('#KODIPROP:')) continue;
+    if (line.startsWith('#')) { extinf = ''; continue; }
+    if (extinf.length === 0) continue;
+    if (!line.startsWith('http://') && !line.startsWith('https://') && !line.startsWith('rtmp://') && !line.startsWith('rtsp://')) continue;
+    channels.push(parseOneChannel(extinf, line, channels.length));
+    extinf = '';
+
+    if (channels.length % CHUNK_SIZE === 0) {
+      onProgress?.(channels.length);
+      await new Promise<void>(r => setTimeout(r, 0));
     }
   }
+  onProgress?.(channels.length);
   return channels;
 }
 
@@ -179,7 +215,7 @@ export async function loadM3uContent(account: { url?: string; sourceType: string
 
     // M3U URL: fetch and parse
     const raw = await fetchM3uContent(account.url);
-    const channels = parseM3uLines(raw);
+    const channels = checkTauri() ? parseM3uLines(raw) : await parseM3uLinesAsync(raw);
     return buildCategorized(channels);
   }
 
