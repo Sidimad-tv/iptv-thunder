@@ -1,8 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { M3uChannel } from '@/features/m3u/m3u.types';
+import type { M3uChannel, M3uContentType, M3uCategory } from '@/features/m3u/m3u.types';
 
 interface M3uParseResult {
-  categories: Array<{ id: string; title: string }>;
+  categories: M3uCategory[];
   contents: M3uChannel[];
   sorted_channels: Record<string, number[]>;
 }
@@ -10,8 +10,16 @@ interface M3uParseResult {
 /** Lightweight result from cached Rust parser — only categories, no channel data */
 export interface M3uCategoriesResult {
   cache_key: string;
-  categories: Array<{ id: string; title: string }>;
+  categories: M3uCategory[];
   total_channels: number;
+}
+
+function classifyContentType(group: string, tvgType?: string): M3uChannel['contentType'] {
+  if (tvgType && ['live', 'movie', 'series'].includes(tvgType)) return tvgType as M3uContentType;
+  const gl = group.toLowerCase();
+  if (gl.includes('movie') || gl.includes('film') || gl.includes('vod') || gl.includes('cinema')) return 'movie';
+  if (gl.includes('series') || gl.includes('episode') || gl.includes('season') || gl.includes('show')) return 'series';
+  return 'live';
 }
 
 /** JS-only parser — kept as last resort fallback only */
@@ -30,7 +38,8 @@ export function parseM3u(content: string): M3uChannel[] {
       const name = n ? n[1].trim() : 'Unknown';
       const logo = (currentExtinf.match(/tvg-logo="([^"]*)"/i) || [])[1] || '';
       const group = (currentExtinf.match(/group-title="([^"]*)"/i) || [])[1] || 'Uncategorized';
-      channels.push({ id: `m3u-${channels.length}`, name, logo, group, streamUrl: line });
+      const tvgType = (currentExtinf.match(/tvg-type="([^"]*)"/i) || [])[1] || '';
+      channels.push({ id: `m3u-${channels.length}`, name, logo, group, streamUrl: line, contentType: classifyContentType(group, tvgType) });
       currentExtinf = null;
     }
   }

@@ -102,23 +102,33 @@ export const AppContent: React.FC<AppContentProps> = ({
 
   if (route.type === 'm3u-movies') {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Movies</h2>
-          <p className="text-slate-400">M3U VOD support coming soon</p>
-        </div>
-      </div>
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading movies...</div>}>
+        <M3uChannelsPage contentTypeFilter="movie" />
+      </Suspense>
     );
   }
 
   if (route.type === 'm3u-series') {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Series</h2>
-          <p className="text-slate-400">M3U Series support coming soon</p>
-        </div>
-      </div>
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading series...</div>}>
+        <M3uChannelsPage contentTypeFilter="series" />
+      </Suspense>
+    );
+  }
+
+  if (route.type === 'm3u-favorites') {
+    return (
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading favorites...</div>}>
+        <M3uChannelsPage defaultFavoritesOnly />
+      </Suspense>
+    );
+  }
+
+  if (route.type === 'm3u-categories') {
+    return (
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading channels...</div>}>
+        <M3uChannelsPage />
+      </Suspense>
     );
   }
 

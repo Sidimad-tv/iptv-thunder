@@ -32,6 +32,7 @@ struct M3uChannelData {
     stream_url: String,
     number: u32,
     tv_genre_id: String,
+    content_type: String,
 }
 
 #[derive(Clone)]
@@ -99,6 +100,19 @@ fn parse_m3u_internal(content: &str) -> (Vec<serde_json::Value>, Vec<M3uChannelD
                 let logo = extinf_attr(extinf, "tvg-logo");
                 let group = extinf_attr(extinf, "group-title");
                 let group_name = if group.is_empty() { "Uncategorized".to_string() } else { group.clone() };
+                let tvg_type = extinf_attr(extinf, "tvg-type");
+                let content_type = if !tvg_type.is_empty() {
+                    tvg_type
+                } else {
+                    let gl = group_name.to_lowercase();
+                    if gl.contains("movie") || gl.contains("film") || gl.contains("vod") || gl.contains("cinema") {
+                        "movie".to_string()
+                    } else if gl.contains("series") || gl.contains("episode") || gl.contains("season") || gl.contains("show") {
+                        "series".to_string()
+                    } else {
+                        "live".to_string()
+                    }
+                };
                 let ch = M3uChannelData {
                     id: format!("m3u-{idx}"),
                     name,
@@ -107,6 +121,7 @@ fn parse_m3u_internal(content: &str) -> (Vec<serde_json::Value>, Vec<M3uChannelD
                     stream_url: line.to_string(),
                     number: idx + 1,
                     tv_genre_id: format!("cat-{}", group_name),
+                    content_type,
                 };
                 group_map.entry(group_name.clone()).or_default().push(ch);
                 let entry = sorted.entry(group_name).or_default();
@@ -243,6 +258,7 @@ async fn get_m3u_group_channels(
                     "streamUrl": ch.stream_url,
                     "number": ch.number,
                     "tv_genre_id": ch.tv_genre_id,
+                    "contentType": ch.content_type,
                 })
             })
             .collect();
@@ -259,6 +275,7 @@ async fn get_m3u_group_channels(
                     "streamUrl": ch.stream_url,
                     "number": ch.number,
                     "tv_genre_id": ch.tv_genre_id,
+                    "contentType": ch.content_type,
                 })
             })
             .collect();

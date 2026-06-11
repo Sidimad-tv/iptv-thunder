@@ -1,5 +1,7 @@
 export type M3uSourceType = 'url' | 'xtream' | 'file';
 
+export type M3uContentType = 'live' | 'movie' | 'series';
+
 export interface M3uChannel {
   id: string;
   name: string;
@@ -8,6 +10,12 @@ export interface M3uChannel {
   streamUrl: string;
   tv_genre_id?: string;
   number?: number;
+  contentType?: M3uContentType;
+}
+
+export interface M3uCategory {
+  id: string;
+  title: string;
 }
 
 export interface M3uAccount {

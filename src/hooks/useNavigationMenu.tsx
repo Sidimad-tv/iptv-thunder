@@ -27,7 +27,7 @@ export const useNavigationMenu = ({
     activeView === 'movie-details' || activeView === 'series' || activeView === 'series-categories' ||
     activeView === 'favorite-series-categories' || activeView === 'favorite-series' || activeView === 'series-details';
 
-  const isM3uActive = activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series';
+  const isM3uActive = activeView === 'm3u' || activeView === 'm3u-channels' || activeView === 'm3u-movies' || activeView === 'm3u-series' || activeView === 'm3u-favorites' || activeView === 'm3u-categories';
 
   return useMemo(() => [
     {
@@ -56,8 +56,8 @@ export const useNavigationMenu = ({
       onClick: () => navigate({ type: 'm3u' }),
       subItems: m3uId ? [
         { id: 'm3u-channels', label: t('channels'), icon: <Tv className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-channels' },
-        { id: 'm3u-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-categories' },
-        { id: 'm3u-favorites', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-channels' }), active: activeView === 'm3u-favorites' },
+        { id: 'm3u-categories', label: t('categories'), icon: <FolderOpen className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-categories' }), active: activeView === 'm3u-categories' },
+        { id: 'm3u-favorites', label: t('favorites'), icon: <Heart className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-favorites' }), active: activeView === 'm3u-favorites' },
         { id: 'm3u-movies', label: t('movies'), icon: <Clapperboard className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-movies' }), active: activeView === 'm3u-movies' },
         { id: 'm3u-series', label: t('series'), icon: <Clapperboard className="w-4 h-4" />, onClick: () => navigate({ type: 'm3u-series' }), active: activeView === 'm3u-series' },
       ] : undefined,

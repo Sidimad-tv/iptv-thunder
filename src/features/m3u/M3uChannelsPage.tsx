@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useM3uStore } from '@/store/m3u.store';
 import { M3uChannelList } from './M3uChannelList';
 import { useTypedRouter } from '@/hooks/useTypedRouter';
+import type { M3uContentType } from './m3u.types';
 
-export const M3uChannelsPage: React.FC = () => {
-  const accounts = useM3uStore(s => s.accounts);
+interface M3uChannelsPageProps {
+  contentTypeFilter?: M3uContentType;
+  defaultFavoritesOnly?: boolean;
+}
+
+export const M3uChannelsPage: React.FC<M3uChannelsPageProps> = ({ contentTypeFilter, defaultFavoritesOnly }) => {
   const activeM3uId = useM3uStore(s => s.activeM3uId);
-  const activeAccount = accounts.find(a => a.id === activeM3uId);
+  const accounts = useM3uStore(s => s.accounts);
+  const activeAccount = useMemo(
+    () => accounts.find(a => a.id === activeM3uId) ?? null,
+    [accounts, activeM3uId]
+  );
   const { navigate } = useTypedRouter();
 
   if (!activeAccount) {
@@ -20,5 +29,5 @@ export const M3uChannelsPage: React.FC = () => {
     );
   }
 
-  return <M3uChannelList account={activeAccount} onClose={() => navigate({ type: 'm3u' })} page />;
+  return <M3uChannelList account={activeAccount} onClose={() => navigate({ type: 'm3u' })} page contentTypeFilter={contentTypeFilter} defaultFavoritesOnly={defaultFavoritesOnly} />;
 };

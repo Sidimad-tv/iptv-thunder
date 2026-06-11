@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { M3uAccount, M3uChannel } from './m3u.types';
-import { fetchAndParse, getM3uGroupChannels, fetchXtreamChannels, clearM3uCache } from '@/utils/m3uParser';
+import { M3uAccount, M3uChannel, M3uContentType, M3uCategory } from './m3u.types';
+import { fetchAndParse, getM3uGroupChannels, fetchXtreamChannels } from '@/utils/m3uParser';
 import { usePlaybackStore } from '@/store/playback.store';
 import { Search, RefreshCw, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,6 +10,8 @@ interface M3uChannelListProps {
   account: M3uAccount;
   onClose: () => void;
   page?: boolean;
+  contentTypeFilter?: M3uContentType;
+  defaultFavoritesOnly?: boolean;
 }
 
 const FAV_KEY_PREFIX = 'm3u-favorites-';
@@ -22,41 +24,23 @@ const saveFavorites = (accountId: string, favs: Set<string>) => {
   localStorage.setItem(getFavKey(accountId), JSON.stringify(Array.from(favs)));
 };
 
-export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose, page }) => {
-  const [channels, setChannels] = useState<M3uChannel[]>([]);
+export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose, page, contentTypeFilter, defaultFavoritesOnly }) => {
+  const [allChannels, setAllChannels] = useState<M3uChannel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingGroup, setLoadingGroup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [cacheKey, setCacheKey] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Array<{ id: string; title: string }>>([]);
+  const [categories, setCategories] = useState<M3uCategory[]>([]);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites(account.id));
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(defaultFavoritesOnly ?? false);
 
-  /** Load channels for the selected group from Rust cache */
-  const loadGroupChannels = useCallback(async (ck: string, groupId: string) => {
-    setLoadingGroup(true);
-    try {
-      const chs = await getM3uGroupChannels(ck, groupId);
-      setChannels(chs);
-    } catch {
-      setError('Failed to load channels');
-    } finally {
-      setLoadingGroup(false);
-    }
-  }, []);
-
-  /** Initial: fetch + parse M3U, get categories only (chunked) */
   const loadChannels = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       if (account.sourceType === 'file') {
         if (account.channels && account.channels.length > 0) {
-          setChannels(account.channels);
-          const firstGroup = account.channels[0]?.group || 'Uncategorized';
-          setActiveGroup(firstGroup);
+          setAllChannels(account.channels);
           setLoading(false);
           return;
         }
@@ -65,49 +49,33 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
 
       if (account.sourceType === 'xtream' && account.serverUrl && account.username && account.password) {
         const r = await fetchXtreamChannels(account.serverUrl, account.username, account.password);
-        setChannels(r.channels);
-        const firstGroup = r.channels[0]?.group || 'Uncategorized';
-        setActiveGroup(firstGroup);
+        setAllChannels(r.channels);
         setLoading(false);
         return;
       }
 
       if (!account.url) throw new Error('No URL configured');
 
-      // Chunked loading: get categories first, channels on demand
-      await clearM3uCache();
+      // Load all channels in one go (no chunking)
       const result = await fetchAndParse(account.url);
-      setCacheKey(result.cache_key);
       setCategories(result.categories);
-
-      if (result.categories.length > 1) {
-        // Load first real group
-        const firstCatId = result.categories[1]?.id || '*';
-        setActiveGroup(firstCatId);
-        await loadGroupChannels(result.cache_key, firstCatId);
-      } else {
-        // Only "All" category — load everything
-        const chs = await getM3uGroupChannels(result.cache_key, '*');
-        setChannels(chs);
-        setActiveGroup(null);
-      }
+      const firstCatId = result.categories[1]?.id || '*';
+      setActiveGroup(firstCatId);
+      const chs = await getM3uGroupChannels(result.cache_key, '*');
+      setAllChannels(chs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load channels');
     } finally {
       setLoading(false);
     }
-  }, [account, loadGroupChannels]);
+  }, [account.id, account.sourceType, account.url, account.serverUrl, account.username, account.password, account.channels]);
 
   useEffect(() => { loadChannels(); }, [loadChannels]);
 
-  /** Switch group — load channels from cache */
   const handleGroupChange = useCallback(async (groupId: string) => {
     setActiveGroup(groupId);
     setSearch('');
-    if (cacheKey) {
-      await loadGroupChannels(cacheKey, groupId);
-    }
-  }, [cacheKey, loadGroupChannels]);
+  }, []);
 
   const toggleFavorite = useCallback((ch: M3uChannel) => {
     setFavorites(prev => {
@@ -118,6 +86,23 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
       return next;
     });
   }, [account.id]);
+
+  const channels = useMemo(() => {
+    let result = allChannels;
+
+    // Filter by group
+    if (activeGroup && activeGroup !== '*') {
+      const groupName = activeGroup.replace(/^cat-/, '');
+      result = result.filter((ch) => ch.group === groupName);
+    }
+
+    // Filter by content type
+    if (contentTypeFilter) {
+      result = result.filter((ch) => ch.contentType === contentTypeFilter);
+    }
+
+    return result;
+  }, [allChannels, activeGroup, contentTypeFilter]);
 
   const filteredChannels = useMemo(() => {
     let result = channels;
@@ -131,11 +116,9 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
     usePlaybackStore.getState().setMedia({
       url: ch.streamUrl,
       name: ch.name,
-      isVod: false,
+      isVod: ch.contentType === 'movie' || ch.contentType === 'series',
     });
   };
-
-  const isLoading = loading || loadingGroup;
 
   return (
     <div className={page ? '' : "fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4"}>
@@ -149,7 +132,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
             </button>
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-white truncate">{account.name}</h2>
-              <p className="text-xs text-slate-400">{categories.length > 0 ? `${categories.length - 1} groups, ` : ''}{filteredChannels.length} channels</p>
+              <p className="text-xs text-slate-400">{filteredChannels.length} channels</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -160,14 +143,14 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showFavoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
             </button>
-            <button onClick={loadChannels} disabled={isLoading} className="p-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-lg transition-colors disabled:opacity-50" title="Reload">
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <button onClick={loadChannels} disabled={loading} className="p-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-lg transition-colors disabled:opacity-50" title="Reload">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
         {/* Group tabs */}
-        {categories.length > 0 && (
+        {categories.length > 0 && !contentTypeFilter && (
           <div className="flex overflow-x-auto gap-1 p-4 pb-0 border-b border-slate-700/50">
             {categories.map((cat) => (
               <button
@@ -200,19 +183,19 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
         )}
 
         {/* Loading */}
-        {isLoading && (
+        {loading && (
           <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>{loading ? 'Loading M3U playlist...' : 'Loading channels...'}</span>
+            <span>Loading channels...</span>
           </div>
         )}
 
         {/* Channel grid */}
-        {!isLoading && !error && (
+        {!loading && !error && (
           <div className="flex-1 overflow-y-auto p-4">
             {filteredChannels.length === 0 ? (
               <div className="text-center py-10 text-slate-500">
-                {search ? 'No channels match your search' : 'No channels in this group'}
+                {search ? 'No channels match your search' : (showFavoritesOnly ? 'No favorites yet. Click the heart icon on a channel to add it.' : 'No channels in this group')}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 min-w-0 overflow-hidden">
