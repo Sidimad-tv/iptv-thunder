@@ -32,7 +32,13 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
   const [categories, setCategories] = useState<M3uCategory[]>([]);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites(account.id));
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(defaultFavoritesOnly ?? false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // Sync showFavoritesOnly with prop (component reused on route change)
+  useEffect(() => {
+    setShowFavoritesOnly(defaultFavoritesOnly ?? false);
+    if (defaultFavoritesOnly || contentTypeFilter) setActiveGroup('*');
+  }, [defaultFavoritesOnly, contentTypeFilter]);
 
   const loadChannels = useCallback(async () => {
     setLoading(true);
@@ -56,7 +62,6 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
 
       if (!account.url) throw new Error('No URL configured');
 
-      // Load all channels in one go (no chunking)
       const result = await fetchAndParse(account.url);
       setCategories(result.categories);
       const firstCatId = result.categories[1]?.id || '*';
@@ -72,7 +77,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
 
   useEffect(() => { loadChannels(); }, [loadChannels]);
 
-  const handleGroupChange = useCallback(async (groupId: string) => {
+  const handleGroupChange = useCallback((groupId: string) => {
     setActiveGroup(groupId);
     setSearch('');
   }, []);
@@ -90,8 +95,8 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
   const channels = useMemo(() => {
     let result = allChannels;
 
-    // Filter by group
-    if (activeGroup && activeGroup !== '*') {
+    // Filter by group (skip when content type or favorites view)
+    if (activeGroup && activeGroup !== '*' && !contentTypeFilter && !defaultFavoritesOnly) {
       const groupName = activeGroup.replace(/^cat-/, '');
       result = result.filter((ch) => ch.group === groupName);
     }
@@ -102,7 +107,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
     }
 
     return result;
-  }, [allChannels, activeGroup, contentTypeFilter]);
+  }, [allChannels, activeGroup, contentTypeFilter, defaultFavoritesOnly]);
 
   const filteredChannels = useMemo(() => {
     let result = channels;
