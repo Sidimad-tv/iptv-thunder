@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MpvPlayer } from './mpv/MpvPlayer';
 import { ExoPlayer } from './exo/ExoPlayer';
 import { BrowserPlayer } from './browser/BrowserPlayer';
 import { useResumeStore } from '@/store/resume.store';
+import { getSetting } from '@/hooks/useSettings';
+import { launchExternalPlayer } from '@/hooks/useExternalPlayer';
 
 interface PlayerProps {
   url: string;
@@ -30,6 +32,8 @@ const PlayerComponent: React.FC<PlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const isBrowser = !isTauriEnv;
+  const [playerType, setPlayerType] = useState<'internal' | 'vlc'>('internal');
+  const extLaunchedRef = useRef(false);
 
   useEffect(() => {
     if (isBrowser) {
@@ -48,10 +52,30 @@ const PlayerComponent: React.FC<PlayerProps> = ({
       }
     };
     detectPlatform();
+
+    // Load player type preference
+    getSetting('playerType').then(setPlayerType).catch(() => {});
   }, [isBrowser]);
+
+  // Launch external player if selected, then close internal player UI
+  useEffect(() => {
+    if (isBrowser || isLoading || extLaunchedRef.current || !url) return;
+    if (playerType === 'vlc') {
+      extLaunchedRef.current = true;
+      launchExternalPlayer(url, name).then(() => {
+        onClose();
+      }).catch((err) => {
+        console.error('External player launch failed:', err);
+        // Fall back to internal player by keeping playerType as internal
+        setPlayerType('internal');
+      });
+    }
+  }, [playerType, url, name, isBrowser, isLoading, onClose]);
 
   const player = useMemo(() => {
     if (isLoading) return null;
+    // Don't render internal player when using external
+    if (playerType !== 'internal') return null;
 
     if (isBrowser) {
       return (
@@ -110,7 +134,7 @@ const PlayerComponent: React.FC<PlayerProps> = ({
         onNextEpisode={onNextEpisode}
       />
     );
-  }, [isLoading, isBrowser, currentPlatform, url, name, channelId, client, buffering, isVod, movieId, resumePosition, genreId, onClose, onEnded, onNextEpisode, onChannelChange, setPosition]);
+  }, [isLoading, isBrowser, currentPlatform, playerType, url, name, channelId, client, buffering, isVod, movieId, resumePosition, genreId, onClose, onEnded, onNextEpisode, onChannelChange, setPosition]);
 
   if (isLoading) {
     return (

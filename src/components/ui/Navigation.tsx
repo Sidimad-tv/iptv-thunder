@@ -1,12 +1,13 @@
 // =========================
 // 🧭 NAVIGATION COMPONENT
 // =========================
-import React, { useState, memo, useRef, useMemo } from 'react';
-import { ChevronDown, Power, Lock } from 'lucide-react';
+import React, { useState, memo, useRef, useMemo, useEffect, useCallback } from 'react';
+import { ChevronDown, Power, Lock, Monitor, Play } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { exit } from '@tauri-apps/plugin-process';
 import { invoke } from '@tauri-apps/api/core';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getSetting, setSetting } from '@/hooks/useSettings';
 
 // Detect Android platform
 const isAndroid = () => {
@@ -25,6 +26,7 @@ export type NavigationItem = {
   subItems?: Array<{
     id: string;
     label: string;
+    icon?: React.ReactNode;
     onClick?: () => void;
     active?: boolean;
   }>;
@@ -50,6 +52,9 @@ const getButtonClass = (isActive: boolean, isDisabled: boolean, hasSubItems: boo
   if (isActive && !hasSubItems) {
     return 'bg-green-700/90 text-white';
   }
+  if (isActive && hasSubItems) {
+    return 'dark:bg-slate-700/60 bg-gray-200/60 dark:text-white text-slate-900';
+  }
   if (isDisabled) {
     return 'dark:bg-slate-700/20 bg-gray-200/30 dark:text-slate-500 text-slate-500 cursor-not-allowed';
   }
@@ -65,6 +70,16 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
   const { t } = useTranslation();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const manuallyInteracted = useRef<Set<string>>(new Set());
+  const [playerType, setPlayerTypeState] = useState<'internal' | 'vlc'>('internal');
+
+  useEffect(() => {
+    getSetting('playerType').then(setPlayerTypeState).catch(() => {});
+  }, []);
+
+  const changePlayer = useCallback(async (type: 'internal' | 'vlc') => {
+    setPlayerTypeState(type);
+    await setSetting('playerType', type);
+  }, []);
 
   const toggleSubmenu = (itemId: string) => {
     manuallyInteracted.current.add(itemId);
@@ -122,10 +137,11 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
                 data-tv-active={item.active || undefined}
                 tabIndex={0}
                 onClick={() => {
+                  if (item.onClick) {
+                    item.onClick();
+                  }
                   if (hasSubItems) {
                     toggleSubmenu(item.id);
-                  } else if (item.onClick) {
-                    item.onClick();
                   }
                 }}
                 disabled={item.disabled}
@@ -192,7 +208,9 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
                         onClick={subItem.onClick}
                         className="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 text-base dark:bg-slate-800/20 bg-gray-100/20 dark:text-slate-300 text-slate-600 dark:hover:bg-slate-700/40 hover:bg-gray-200/40 hover:text-white"
                       >
-                        <span className="text-base dark:text-white text-slate-900">▸</span>
+                        <span className="text-base relative z-10 flex-shrink-0 dark:text-white text-slate-900">
+                          {subItem.icon || '▸'}
+                        </span>
                         <span className="dark:text-white text-slate-900">{subItem.label}</span>
                       </button>
                     ))}
@@ -224,7 +242,9 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
                           whileTap={{ scale: 0.98 }}
                           className="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 text-base dark:bg-slate-800/20 bg-gray-100/20 dark:text-slate-300 text-slate-600 dark:hover:bg-slate-700/40 hover:bg-gray-200/40 hover:text-white"
                         >
-                          <span className="text-base dark:text-white text-slate-900">▸</span>
+                          <span className="text-base relative z-10 flex-shrink-0 dark:text-white text-slate-900">
+                            {subItem.icon || '▸'}
+                          </span>
                           <span className="dark:text-white text-slate-900">{subItem.label}</span>
                         </motion.button>
                       ))}
@@ -239,6 +259,36 @@ export const Navigation: React.FC<NavigationProps> = memo(({ items, className = 
 
       {/* Footer */}
       <div className="p-2 md:p-3 lg:p-4 gap-2 md:gap-3 lg:gap-4 border-t dark:border-slate-700/30 border-gray-200/30 space-y-2 md:space-y-3 lg:space-y-4">
+        {/* Player Selector */}
+        <div className="px-1">
+          <p className="text-xs text-slate-500 mb-2 px-1 font-medium uppercase tracking-wider">Player</p>
+          <div className="flex gap-1">
+            {([
+              { type: 'internal' as const, label: 'MPV', icon: Monitor },
+              { type: 'vlc' as const, label: 'VLC', icon: Play },
+            ]).map(({ type, label, icon: Icon }) => (
+              <motion.button
+                key={type}
+                data-tv-focusable
+                data-tv-group="player-select"
+                tabIndex={0}
+                onClick={() => changePlayer(type)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  playerType === type
+                    ? 'bg-green-600/30 text-green-400 border border-green-500/30'
+                    : 'dark:bg-slate-800/30 bg-gray-100/30 dark:text-slate-400 text-slate-500 border border-transparent dark:hover:bg-slate-700/30 hover:bg-gray-200/30'
+                }`}
+                title={`Use ${label} player`}
+              >
+                <Icon className="w-3 h-3" />
+                <span>{label}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
         {/* Close App Button - subtle style */}
         <motion.button
           data-tv-id="close-app"

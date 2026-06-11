@@ -46,13 +46,12 @@ export class StalkerClient {
 
     const hasTauriAPI = globalThis.window !== undefined && '__TAURI__' in globalThis.window;
     const isTauriBuild = (globalThis as any).__TAURI_BUILD__ === true;
-    const isLocalhost = globalThis.window !== undefined &&
-                       (globalThis.window.location.hostname === 'localhost' ||
-                        globalThis.window.location.hostname === '127.0.0.1' ||
-                        globalThis.window.location.hostname === 'tauri.localhost' ||
-                        globalThis.window.location.protocol === 'tauri:');
+    const hasTauriInternals = globalThis.window !== undefined &&
+                              (globalThis.window as any).__TAURI_INTERNALS__ !== undefined;
+    const isTauriProtocol = globalThis.window !== undefined &&
+                            globalThis.window.location.protocol === 'tauri:';
 
-    this.useTauri = !!osPlatform || hasTauriAPI || isTauriBuild || isLocalhost;
+    this.useTauri = !!osPlatform || hasTauriAPI || isTauriBuild || hasTauriInternals || isTauriProtocol;
 
     // Default to same-origin Vercel serverless proxy in browser mode
     let corsProxy = options?.corsProxy || '';
@@ -77,7 +76,7 @@ export class StalkerClient {
         osPlatform,
         hasTauriAPI,
         isTauriBuild,
-        isLocalhost,
+        hasTauriInternals,
         hostname: globalThis.window.location.hostname,
         protocol: globalThis.window.location.protocol,
         tauriEnv: (globalThis as any).__TAURI_BUILD__,
@@ -164,7 +163,6 @@ export class StalkerClient {
       JsHttpRequest: '1-xml',
     };
 
-    // Request debug tracking
     const ctx = createDebugRequestContext('handshake', params);
 
     let response: any;
@@ -197,8 +195,6 @@ export class StalkerClient {
       } else if (this.useTauri && this.tauriHttp) {
         this.tauriHttp.setHeader('Authorization', `Bearer ${this.token}`);
       }
-
-
 
       if (!this.token) {
         throw new Error('Handshake failed - token is null');
@@ -300,6 +296,23 @@ export class StalkerClient {
     if (!this.token) return false;
     if (!this.tokenExpiresAt) return false;
     return new Date() < this.tokenExpiresAt;
+  }
+
+  /**
+   * Refresh the STB token by re-running the handshake.
+   * Returns true if successful, false otherwise.
+   * Matches mystb Python refresh_token behavior.
+   */
+  async refreshToken(): Promise<boolean> {
+    try {
+      this.token = null;
+      this.tokenExpiresAt = null;
+      await this.handshake();
+      return true;
+    } catch (error) {
+      this.logger.warn('Token refresh failed:', error);
+      return false;
+    }
   }
 
   /**
@@ -588,7 +601,7 @@ async getVODDetails(vodId: string): Promise<StalkerVOD> {
   // ==================== AUTH & HTTP HELPERS ====================
 
   /**
-   * Ensure we have a valid token (handshake if needed)
+   * Ensure we have a valid token (handshake if needed, refresh if expired)
    */
   async ensureAuthenticated(): Promise<void> {
     if (this.token && this.isTokenValid()) {

@@ -6,6 +6,7 @@ use std::sync::{LazyLock, Mutex};
 use std::collections::HashMap;
 use tokio::sync::oneshot;
 use tokio::sync::Mutex as AsyncMutex;
+use serde::Serialize;
 
 static CANCEL_MAP: LazyLock<Mutex<HashMap<String, oneshot::Sender<()>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -20,6 +21,258 @@ static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
         .build()
         .expect("Failed to create HTTP client")
 });
+
+// M3U cache structures
+#[derive(Clone, Serialize)]
+struct M3uChannelData {
+    id: String,
+    name: String,
+    logo: String,
+    group: String,
+    stream_url: String,
+    number: u32,
+    tv_genre_id: String,
+}
+
+#[derive(Clone)]
+struct M3uCacheEntry {
+    categories: Vec<serde_json::Value>,
+    group_channels: HashMap<String, Vec<M3uChannelData>>,
+    sorted_channels: HashMap<String, Vec<u32>>,
+    contents: Vec<M3uChannelData>,
+    total: usize,
+}
+
+static M3U_CACHE: LazyLock<Mutex<HashMap<String, M3uCacheEntry>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+fn m3u_cache_key(url_or_content: &str) -> String {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    url_or_content.hash(&mut hasher);
+    format!("m3u_{:x}", hasher.finish())
+}
+
+fn extinf_attr(line: &str, name: &str) -> String {
+    let search = format!(r#"{}=""#, name);
+    if let Some(start) = line.find(&search) {
+        let value_start = start + search.len();
+        let remaining = &line[value_start..];
+        if let Some(end) = remaining.find('"') {
+            return remaining[..end].to_string();
+        }
+    }
+    String::new()
+}
+
+fn parse_m3u_internal(content: &str) -> (Vec<serde_json::Value>, Vec<M3uChannelData>, HashMap<String, Vec<u32>>) {
+    let mut categories: Vec<serde_json::Value> = Vec::new();
+    let mut group_map: HashMap<String, Vec<M3uChannelData>> = HashMap::new();
+    let mut sorted: HashMap<String, Vec<u32>> = HashMap::new();
+    let mut current_extinf: Option<String> = None;
+    let mut idx: u32 = 0;
+
+    for raw_line in content.lines() {
+        let line = raw_line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if line.starts_with("#EXTINF:") {
+            current_extinf = Some(line.to_string());
+            continue;
+        }
+        if line.starts_with("#EXTVLCOPT:") || line.starts_with("#KODIPROP:") {
+            continue;
+        }
+        if line.starts_with('#') {
+            current_extinf = None;
+            continue;
+        }
+        if line.starts_with("http://") || line.starts_with("https://") || line.starts_with("rtmp://") || line.starts_with("rtsp://") {
+            if let Some(ref extinf) = current_extinf {
+                let name = extinf
+                    .rsplit(',')
+                    .next()
+                    .unwrap_or("Unknown")
+                    .trim()
+                    .to_string();
+                let logo = extinf_attr(extinf, "tvg-logo");
+                let group = extinf_attr(extinf, "group-title");
+                let group_name = if group.is_empty() { "Uncategorized".to_string() } else { group.clone() };
+                let ch = M3uChannelData {
+                    id: format!("m3u-{idx}"),
+                    name,
+                    logo,
+                    group: group_name.clone(),
+                    stream_url: line.to_string(),
+                    number: idx + 1,
+                    tv_genre_id: format!("cat-{}", group_name),
+                };
+                group_map.entry(group_name.clone()).or_default().push(ch);
+                let entry = sorted.entry(group_name).or_default();
+                entry.push(idx);
+                idx += 1;
+            }
+            current_extinf = None;
+        }
+    }
+
+    // Build categories list sorted by group name
+    let mut group_names: Vec<&String> = group_map.keys().collect();
+    group_names.sort();
+    categories.push(serde_json::json!({ "id": "*", "title": "All" }));
+    for gn in &group_names {
+        categories.push(serde_json::json!({ "id": format!("cat-{}", gn), "title": gn }));
+    }
+
+    // Flatten contents preserving group order
+    let mut contents: Vec<M3uChannelData> = Vec::new();
+    for gn in &group_names {
+        if let Some(chs) = group_map.get(*gn) {
+            contents.extend(chs.clone());
+        }
+    }
+
+    (categories, contents, sorted)
+}
+
+#[tauri::command]
+async fn fetch_and_parse_m3u(
+    url: String,
+    url_override: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let fetch_url = url_override.unwrap_or(url.clone());
+    use serde_json::json;
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(60))
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client
+        .get(&fetch_url)
+        .header("Accept", "*/*")
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {e}"))?;
+
+    let content = resp.text().await.map_err(|e| e.to_string())?;
+
+    let cache_key = m3u_cache_key(&url);
+    let (categories, contents, sorted_channels) = parse_m3u_internal(&content);
+    let total = contents.len();
+
+    // Store in cache
+    let mut group_channels: HashMap<String, Vec<M3uChannelData>> = HashMap::new();
+    for ch in &contents {
+        group_channels.entry(ch.group.clone()).or_default().push(ch.clone());
+    }
+    let entry = M3uCacheEntry {
+        categories: categories.clone(),
+        group_channels,
+        sorted_channels: sorted_channels.clone(),
+        contents: contents.clone(),
+        total,
+    };
+    M3U_CACHE.lock().unwrap().insert(cache_key.clone(), entry);
+
+    Ok(json!({
+        "cache_key": cache_key,
+        "categories": categories,
+        "total_channels": total,
+        "contents": contents,
+        "sorted_channels": sorted_channels
+    }))
+}
+
+#[tauri::command]
+async fn parse_m3u_text(
+    content: String,
+    cache_key_hint: Option<String>,
+) -> Result<serde_json::Value, String> {
+    use serde_json::json;
+
+    let cache_key = cache_key_hint.unwrap_or_else(|| m3u_cache_key(&content));
+    let (categories, contents, sorted_channels) = parse_m3u_internal(&content);
+    let total = contents.len();
+
+    // Store in cache
+    let mut group_channels: HashMap<String, Vec<M3uChannelData>> = HashMap::new();
+    for ch in &contents {
+        group_channels.entry(ch.group.clone()).or_default().push(ch.clone());
+    }
+    let entry = M3uCacheEntry {
+        categories: categories.clone(),
+        group_channels,
+        sorted_channels: sorted_channels.clone(),
+        contents: contents.clone(),
+        total,
+    };
+    M3U_CACHE.lock().unwrap().insert(cache_key.clone(), entry);
+
+    Ok(json!({
+        "cache_key": cache_key,
+        "categories": categories,
+        "total_channels": total,
+        "contents": contents,
+        "sorted_channels": sorted_channels
+    }))
+}
+
+#[tauri::command]
+async fn get_m3u_group_channels(
+    cache_key: String,
+    group_id: String,
+) -> Result<Vec<serde_json::Value>, String> {
+    let cache = M3U_CACHE.lock().unwrap();
+    let entry = cache.get(&cache_key).ok_or("Cache key not found")?;
+
+    let group_name = group_id.strip_prefix("cat-").unwrap_or(&group_id).to_string();
+    if group_name == "*" || group_name == "All" {
+        // Return all channels
+        let all: Vec<serde_json::Value> = entry
+            .contents
+            .iter()
+            .map(|ch| {
+                serde_json::json!({
+                    "id": ch.id,
+                    "name": ch.name,
+                    "logo": ch.logo,
+                    "group": ch.group,
+                    "streamUrl": ch.stream_url,
+                    "number": ch.number,
+                    "tv_genre_id": ch.tv_genre_id,
+                })
+            })
+            .collect();
+        Ok(all)
+    } else if let Some(channels) = entry.group_channels.get(&group_name) {
+        let result: Vec<serde_json::Value> = channels
+            .iter()
+            .map(|ch| {
+                serde_json::json!({
+                    "id": ch.id,
+                    "name": ch.name,
+                    "logo": ch.logo,
+                    "group": ch.group,
+                    "streamUrl": ch.stream_url,
+                    "number": ch.number,
+                    "tv_genre_id": ch.tv_genre_id,
+                })
+            })
+            .collect();
+        Ok(result)
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+#[tauri::command]
+async fn clear_m3u_cache() -> Result<(), String> {
+    M3U_CACHE.lock().unwrap().clear();
+    Ok(())
+}
 
 #[tauri::command]
 async fn stalker_request(
@@ -430,6 +683,100 @@ async fn fetch_epg_gz(url: String) -> Result<String, String> {
     }
 }
 
+fn resolve_external_program(program: &str) -> String {
+    // If it's already a full path and exists, use it
+    let p = std::path::Path::new(program);
+    if p.is_file() {
+        return program.to_string();
+    }
+    // If it has a path separator, return as-is (user specified a path)
+    if program.contains('\\') || program.contains('/') {
+        return program.to_string();
+    }
+    // Try where.exe (Windows) to find in PATH
+    if let Ok(output) = std::process::Command::new("where")
+        .arg(program)
+        .output()
+    {
+        if output.status.success() {
+            if let Ok(path) = String::from_utf8(output.stdout) {
+                let first = path.lines().next().unwrap_or(program).trim().to_string();
+                if !first.is_empty() {
+                    return first;
+                }
+            }
+        }
+    }
+    // Common install locations
+    let common_paths = vec![
+        format!("C:\\Program Files\\VideoLAN\\VLC\\vlc.exe"),
+        format!("C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe"),
+        format!("C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe"),
+        format!("C:\\Program Files\\ffmpeg\\bin\\ffplay.exe"),
+    ];
+    for path in &common_paths {
+        if std::path::Path::new(path).exists() {
+            return path.to_string();
+        }
+    }
+    // Also look in the executable directory / exec folder
+    if let Ok(exe_dir) = std::env::current_exe() {
+        if let Some(parent) = exe_dir.parent() {
+            let sibling = parent.join("exec").join(program);
+            if sibling.exists() {
+                return sibling.to_string_lossy().to_string();
+            }
+            // Try program.exe in exe_dir
+            let exe_path = parent.join(format!("{}.exe", program.trim_end_matches(".exe")));
+            if exe_path.exists() {
+                return exe_path.to_string_lossy().to_string();
+            }
+        }
+    }
+    program.to_string()
+}
+
+fn read_extra_args() -> Vec<String> {
+    // Read extra args from a config file next to the executable
+    let args_file = std::env::current_exe()
+        .ok()
+        .map(|p| {
+            let mut f = p;
+            f.set_extension("args");
+            f
+        });
+    if let Some(path) = args_file {
+        if path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                return content
+                    .lines()
+                    .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
+                    .map(|l| l.trim().to_string())
+                    .collect();
+            }
+        }
+    }
+    Vec::new()
+}
+
+#[tauri::command]
+async fn launch_process(program: String, args: Vec<String>) -> Result<String, String> {
+    let resolved = resolve_external_program(&program);
+    let mut cmd = std::process::Command::new(&resolved);
+    cmd.args(&args);
+
+    // Add extra args from config file
+    let extra = read_extra_args();
+    if !extra.is_empty() {
+        cmd.args(&extra);
+    }
+
+    cmd.spawn()
+        .map_err(|e| format!("Failed to launch {}: {}", resolved, e))?;
+
+    Ok(resolved)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg_attr(target_os = "android", allow(unused_mut))]
@@ -468,11 +815,16 @@ pub fn run() {
             stalker_request,
             cancel_request,
             fetch_image,
+            fetch_url,
             check_mpv_available,
             fetch_epg_gz,
             run_updater,
             export_portals,
-            fetch_url
+            fetch_and_parse_m3u,
+            parse_m3u_text,
+            get_m3u_group_channels,
+            clear_m3u_cache,
+            launch_process
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

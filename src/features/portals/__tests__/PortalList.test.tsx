@@ -19,6 +19,24 @@ jest.mock('../PortalTest', () => ({
   PortalTest: () => <div>PortalTest</div>,
 }));
 
+jest.mock('@tauri-apps/api/core', () => ({
+  invoke: jest.fn(),
+}));
+
+jest.mock('@/utils/portalImporter', () => ({
+  fetchLatestBlogPortals: jest.fn(),
+  fetchPortalsFromUrl: jest.fn(),
+  getSavedImportUrls: jest.fn().mockReturnValue([]),
+  addSavedImportUrl: jest.fn(),
+  removeSavedImportUrl: jest.fn(),
+  getBlogSources: jest.fn().mockReturnValue([]),
+  addBlogSource: jest.fn(),
+  removeBlogSource: jest.fn(),
+  exportBlogSources: jest.fn(),
+  importBlogSources: jest.fn(),
+  DEFAULT_BLOG_POSTS: [],
+}));
+
 jest.mock('lucide-react', () => ({
   CheckCircle: 'svg',
   Circle: 'svg',
@@ -31,6 +49,11 @@ jest.mock('lucide-react', () => ({
   Globe: 'svg',
   User: 'svg',
   Monitor: 'svg',
+  Download: 'svg',
+  Upload: 'svg',
+  History: 'svg',
+  Trash: 'svg',
+  Save: 'svg',
 }));
 
 const mockUseTranslation = useTranslation as jest.MockedFunction<typeof useTranslation>;

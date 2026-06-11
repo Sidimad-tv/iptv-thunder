@@ -3,6 +3,7 @@
 // =========================
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useChannelEPG } from '@/features/epg/epg.hooks';
 import { getCurrentProgram } from '@/features/epg/epg.api';
 import { useResumeStore } from '@/store/resume.store';
@@ -205,6 +206,22 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
     }
   }, [onChannelChange]);
 
+  const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+
+  const handleToggleAlwaysOnTop = useCallback(async () => {
+    try {
+      const w = getCurrentWindow();
+      await w.setAlwaysOnTop(!isAlwaysOnTop);
+      setIsAlwaysOnTop(!isAlwaysOnTop);
+    } catch (e) {
+      console.error('Toggle always on top failed', e);
+    }
+  }, [isAlwaysOnTop]);
+
+  const handleRefreshStream = useCallback(() => {
+    mpv.handleManualRetry();
+  }, [mpv.handleManualRetry]);
+
   const handleClosePlayer = useCallback(() => {
     void controls.handleClose(onClose);
   }, [controls.handleClose, onClose]);
@@ -356,6 +373,9 @@ const MpvPlayerComponent: React.FC<PlayerProps> = ({
             recentChannels={!isVod ? recentChannels : undefined}
             currentChannelId={channelId}
             onChannelSelect={handleChannelSelect}
+            onRefreshStream={handleRefreshStream}
+            isAlwaysOnTop={isAlwaysOnTop}
+            onToggleAlwaysOnTop={handleToggleAlwaysOnTop}
           />
         )}
 

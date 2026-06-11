@@ -25,6 +25,7 @@
     "store:default",
     "store:allow-load",
     "shell:default",
+    "shell:allow-execute",
     {
       "identifier": "http:default",
       "allow": [{ "url": "https://**" }, { "url": "http://**" }]

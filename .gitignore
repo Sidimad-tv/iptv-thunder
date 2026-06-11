@@ -10,3 +10,11 @@ dist-cache/
 !.vercel/project.json
 .vercel
 src-tauri/target/
+.playwright-mcp/
+BACKUPS/
+mystb/
+AGENTS.rar
+project.md
+Arabic_LiveTV.m3u
+update-tool/
+*.bak

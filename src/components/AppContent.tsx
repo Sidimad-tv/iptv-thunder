@@ -65,17 +65,18 @@ export const AppContent: React.FC<AppContentProps> = ({
       scb3: '/1/SCB3.html',
       imdb: '/1/SIdimdb/index.html',
     };
-    const cacheBuster = Date.now();
+    const stableKey = route.type;
     return (
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 bg-black">
           <iframe
-            key={`${route.type}-${cacheBuster}`}
-            src={`${pages[route.type]}?t=${cacheBuster}`}
+            key={stableKey}
+            src={pages[route.type]}
             className="w-full h-full border-0"
             title={route.type}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           />
         </div>
       </div>

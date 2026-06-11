@@ -43,6 +43,10 @@ export interface AppSettings {
   channelViewMode: 'grid' | 'list';
 
   // Player settings
+  playerType: 'internal' | 'vlc';
+  vlcPath: string;
+  alwaysOnTop: boolean;
+  multiWindow: boolean;
   autoPlay: boolean;
   autoPlayEpisodes: boolean;
   volume: number;
@@ -85,6 +89,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   language: 'en',
   sidebarCollapsed: false,
   channelViewMode: 'grid',
+  playerType: 'internal',
+  vlcPath: '',
+  alwaysOnTop: false,
+  multiWindow: false,
   autoPlay: true,
   autoPlayEpisodes: true,
   volume: 1,

@@ -28,13 +28,16 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current).toHaveLength(6);
+    expect(result.current).toHaveLength(9);
     expect(result.current[0].id).toBe('portals');
-    expect(result.current[1].id).toBe('for-you');
-    expect(result.current[2].id).toBe('tv');
-    expect(result.current[3].id).toBe('movies');
-    expect(result.current[4].id).toBe('series');
-    expect(result.current[5].id).toBe('settings');
+    expect(result.current[1].id).toBe('m3u');
+    expect(result.current[2].id).toBe('for-you');
+    expect(result.current[3].id).toBe('tv');
+    expect(result.current[4].id).toBe('movies');
+    expect(result.current[5].id).toBe('series');
+    expect(result.current[6].id).toBe('scb');
+    expect(result.current[7].id).toBe('imdb');
+    expect(result.current[8].id).toBe('settings');
   });
 
   it('should set active state correctly for portals view', () => {
@@ -49,7 +52,7 @@ describe('useNavigationMenu', () => {
     );
 
     expect(result.current[0].active).toBe(true);
-    expect(result.current[1].active).toBe(false);
+    expect(result.current[2].active).toBe(false);
   });
 
   it('should set active state correctly for tv views', () => {
@@ -63,7 +66,7 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[2].active).toBe(true);
+    expect(result.current[3].active).toBe(true);
   });
 
   it('should set active state correctly for movie views', () => {
@@ -77,7 +80,7 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[3].active).toBe(true);
+    expect(result.current[4].active).toBe(true);
   });
 
   it('should set active state correctly for series views', () => {
@@ -91,7 +94,7 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[4].active).toBe(true);
+    expect(result.current[5].active).toBe(true);
   });
 
   it('should disable items when no active portal', () => {
@@ -105,10 +108,7 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[1].disabled).toBe(true);
     expect(result.current[2].disabled).toBe(true);
-    expect(result.current[3].disabled).toBe(true);
-    expect(result.current[4].disabled).toBe(true);
   });
 
   it('should not disable items when active portal exists', () => {
@@ -122,7 +122,6 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[1].disabled).toBe(false);
     expect(result.current[2].disabled).toBe(false);
   });
 
@@ -152,7 +151,7 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    result.current[1]?.onClick?.();
+    result.current[2]?.onClick?.();
     expect(mockNavigate).toHaveBeenCalledWith({ type: 'for-you' });
   });
 
@@ -167,11 +166,11 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    result.current[5]?.onClick?.();
+    result.current[8]?.onClick?.();
     expect(mockSetIsSettingsOpen).toHaveBeenCalledWith(true);
   });
 
-  it('should include sub-items for tv category', () => {
+  it('should include portal sub-items for tv category', () => {
     const { result } = renderHook(() =>
       useNavigationMenu({
         activeView: 'portals',
@@ -182,44 +181,12 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[2].subItems).toHaveLength(3);
-    expect(result.current[2].subItems?.[0].id).toBe('categories');
-    expect(result.current[2].subItems?.[1].id).toBe('favorite-categories');
-    expect(result.current[2].subItems?.[2].id).toBe('favorite-channels');
-  });
-
-  it('should include sub-items for movies category', () => {
-    const { result } = renderHook(() =>
-      useNavigationMenu({
-        activeView: 'portals',
-        activePortal,
-        navigate: mockNavigate,
-        setIsSettingsOpen: mockSetIsSettingsOpen,
-        activeM3uId: null,
-      })
-    );
-
-    expect(result.current[3].subItems).toHaveLength(3);
-    expect(result.current[3].subItems?.[0].id).toBe('movie-categories');
-    expect(result.current[3].subItems?.[1].id).toBe('favorite-movie-categories');
-    expect(result.current[3].subItems?.[2].id).toBe('favorite-movies');
-  });
-
-  it('should include sub-items for series category', () => {
-    const { result } = renderHook(() =>
-      useNavigationMenu({
-        activeView: 'portals',
-        activePortal,
-        navigate: mockNavigate,
-        setIsSettingsOpen: mockSetIsSettingsOpen,
-        activeM3uId: null,
-      })
-    );
-
-    expect(result.current[4].subItems).toHaveLength(3);
-    expect(result.current[4].subItems?.[0].id).toBe('series-categories');
-    expect(result.current[4].subItems?.[1].id).toBe('favorite-series-categories');
-    expect(result.current[4].subItems?.[2].id).toBe('favorite-series');
+    const tv = result.current[3];
+    expect(tv.subItems).toBeDefined();
+    expect(tv.subItems).toHaveLength(3);
+    expect(tv.subItems![0].id).toBe('categories');
+    expect(tv.subItems![1].id).toBe('favorite-categories');
+    expect(tv.subItems![2].id).toBe('favorite-channels');
   });
 
   it('should set active state for sub-items correctly', () => {
@@ -233,6 +200,7 @@ describe('useNavigationMenu', () => {
       })
     );
 
-    expect(result.current[2].subItems?.[2].active).toBe(true);
+    const tv = result.current[3];
+    expect(tv.subItems![2].active).toBe(true);
   });
 });

@@ -16,7 +16,7 @@ const Player = lazy(() => import('@/features/player/Player').then(module => ({ d
 interface NavigationItem {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   active: boolean;
   disabled?: boolean;
   onClick?: () => void;

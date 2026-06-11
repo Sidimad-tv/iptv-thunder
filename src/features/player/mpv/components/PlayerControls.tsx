@@ -32,6 +32,10 @@ interface PlayerControlsProps {
   recentChannels?: any[];
   currentChannelId?: number;
   onChannelSelect?: (channel: any) => void;
+  onRefreshStream?: () => void;
+  isAlwaysOnTop?: boolean;
+  onToggleAlwaysOnTop?: () => void;
+  onOpenInNewWindow?: () => void;
 }
 
 export const PlayerControls = React.memo<PlayerControlsProps>(({
@@ -40,12 +44,14 @@ export const PlayerControls = React.memo<PlayerControlsProps>(({
   onPlayPause, onFullscreen, onPip, onClose,
   onVolumeChange, onProgressClick, onShowEPG, onSetAudioTrack, onSetSubTrack, onSeekToBeginning,
   onNextEpisode,
-  categoryChannels, recentChannels, currentChannelId, onChannelSelect
+  categoryChannels, recentChannels, currentChannelId, onChannelSelect,
+  onRefreshStream, isAlwaysOnTop, onToggleAlwaysOnTop, onOpenInNewWindow,
 }) => {
   const { t } = useTranslation();
   const [showTrackMenu, setShowTrackMenu] = useState(false);
   const [showCategoryChannelsMenu, setShowCategoryChannelsMenu] = useState(false);
   const [showRecentChannelsMenu, setShowRecentChannelsMenu] = useState(false);
+  const [showProgressDropdown, setShowProgressDropdown] = useState(false);
   const audioTracks = tracks.filter(t => t.type === 'audio');
   const subTracks = tracks.filter(t => t.type === 'sub');
   const hasTracks = audioTracks.length > 1 || subTracks.length > 0;
@@ -313,19 +319,19 @@ export const PlayerControls = React.memo<PlayerControlsProps>(({
           )}
         </div>
 
-        {/* Center: Progress Bar (VOD only) */}
-        {isVod ? (
-          <div className="flex-1 mx-4 h-10 flex flex-col justify-center relative">
-            <span className="absolute -left-2 top-0 text-white text-xs">{formatDurationTime(currentTime)}</span>
-            <span className="absolute -right-2 top-0 text-white text-xs">{formatDurationTime(duration)}</span>
-            <div className="h-1 bg-gray-600 rounded cursor-pointer relative group" onClick={onProgressClick}>
-              <div className="h-full bg-red-600 rounded transition-all duration-100"
-                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
-              <div className="absolute top-1/2 w-4 h-4 bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }} />
-            </div>
-          </div>
-        ) : <div className="flex-1" />}
+        {/* Center: Progress Dropdown Toggle (VOD only) */}
+        {isVod && (
+          <button
+            onClick={() => { setShowProgressDropdown(!showProgressDropdown); setShowTrackMenu(false); setShowCategoryChannelsMenu(false); setShowRecentChannelsMenu(false); }}
+            className={`flex-1 mx-4 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              showProgressDropdown ? 'bg-white/20 text-white' : 'bg-white/10 text-white/70 hover:bg-white/15'
+            }`}
+            title="Toggle seekbar"
+          >
+            {formatDurationTime(currentTime)} / {formatDurationTime(duration)}
+          </button>
+        )}
+        {!isVod && <div className="flex-1" />}
 
         {/* Volume */}
         <div className="flex items-center gap-2 max-w-[140px] mr-4">
@@ -338,8 +344,41 @@ export const PlayerControls = React.memo<PlayerControlsProps>(({
             style={{ accentColor: 'white' }} />
         </div>
 
-        {/* Right: Fullscreen, PiP & Close */}
+        {/* Right: Action Buttons */}
         <div className="flex items-center gap-3">
+          {/* Refresh Stream */}
+          {onRefreshStream && (
+            <button onClick={onRefreshStream} data-tv-focusable tabIndex={0}
+              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              title="Refresh Stream (renew token)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+            </button>
+          )}
+
+          {/* Always on Top */}
+          {onToggleAlwaysOnTop && (
+            <button onClick={onToggleAlwaysOnTop} data-tv-focusable tabIndex={0}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isAlwaysOnTop ? 'bg-yellow-500/80 hover:bg-yellow-500' : 'bg-white/20 hover:bg-white/30'}`}
+              title={isAlwaysOnTop ? 'Disable Always on Top' : 'Always on Top'}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                <path d="M13 9V5h-2v4H5v2h6v4h2v-4h6V9h-6z"/>
+              </svg>
+            </button>
+          )}
+
+          {/* Open in New Window */}
+          {onOpenInNewWindow && (
+            <button onClick={onOpenInNewWindow} data-tv-focusable tabIndex={0}
+              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              title="Open in New Window">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+              </svg>
+            </button>
+          )}
+
           <button onClick={onFullscreen} data-tv-focusable tabIndex={0}
             className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
@@ -369,6 +408,22 @@ export const PlayerControls = React.memo<PlayerControlsProps>(({
           </button>
         </div>
       </div>
+
+      {/* Progress Dropdown - VOD only */}
+      {showProgressDropdown && isVod && (
+        <div className="mt-4 border-t border-gray-700/50 pt-4 px-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-white text-xs">{formatDurationTime(currentTime)}</span>
+            <span className="text-white text-xs">{formatDurationTime(duration)}</span>
+          </div>
+          <div className="h-2 bg-gray-600 rounded cursor-pointer relative group" onClick={onProgressClick}>
+            <div className="h-full bg-red-600 rounded transition-all duration-100"
+              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
+            <div className="absolute top-1/2 w-5 h-5 bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }} />
+          </div>
+        </div>
+      )}
 
       {/* Category Channels Carousel - Live TV only */}
       {showCategoryChannelsMenu && !isVod && hasCategoryChannels && (

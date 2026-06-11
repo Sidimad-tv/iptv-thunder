@@ -9,12 +9,7 @@ import { PortalForm } from './PortalForm';
 import { PortalTest } from './PortalTest';
 import { fetchLatestBlogPortals, fetchPortalsFromUrl, getSavedImportUrls, addSavedImportUrl, removeSavedImportUrl, getBlogSources, addBlogSource, removeBlogSource, exportBlogSources, importBlogSources, BlogPortalEntry, DEFAULT_BLOG_POSTS } from '@/utils/portalImporter';
 import { invoke } from '@tauri-apps/api/core';
-import { useM3uStore } from '@/store/m3u.store';
-import { CheckCircle, Circle, Plus, Target, RefreshCw, Edit, Trash2, X, Globe, Monitor, Download, Upload, History, FileText, Trash, Save, Play } from 'lucide-react';
-import { M3uChannelList } from '@/features/m3u/M3uChannelList';
-import { M3uTest } from '@/features/m3u/M3uTest';
-import { M3uForm } from '@/features/m3u/M3uForm';
-import { M3uAccount } from '@/features/m3u/m3u.types';
+import { CheckCircle, Circle, Plus, Target, RefreshCw, Edit, Trash2, X, Globe, Monitor, Download, Upload, History, Trash, Save } from 'lucide-react';
 
 export const PortalList: React.FC = () => {
   const { t, currentLang } = useTranslation();
@@ -24,6 +19,7 @@ export const PortalList: React.FC = () => {
   const [activeMenuPortal, setActiveMenuPortal] = useState<string | null>(null);
   const [deletingPortal, setDeletingPortal] = useState<PortalAccount | null>(null);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [portalsToKeep, setPortalsToKeep] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
   const [importEntries, setImportEntries] = useState<BlogPortalEntry[] | null>(null);
   const [importUrl, setImportUrl] = useState('');
@@ -34,11 +30,6 @@ export const PortalList: React.FC = () => {
   const [showAddBlogSource, setShowAddBlogSource] = useState(false);
   const [blogSourceName, setBlogSourceName] = useState('');
   const [blogSourceUrl, setBlogSourceUrl] = useState('');
-  const [viewingM3u, setViewingM3u] = useState<M3uAccount | null>(null);
-  const [testingM3u, setTestingM3u] = useState<M3uAccount | null>(null);
-  const [editingM3u, setEditingM3u] = useState<M3uAccount | null>(null);
-  const [deletingM3u, setDeletingM3u] = useState<M3uAccount | null>(null);
-  const [showM3uForm, setShowM3uForm] = useState(false);
   const blogFileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,9 +40,6 @@ export const PortalList: React.FC = () => {
     setActivePortal,
     addPortal,
   } = usePortalsStore();
-
-  const { accounts: m3uAccounts, activeM3uId, deleteM3u, setActiveM3u } = useM3uStore();
-  const addM3u = useM3uStore(s => s.addM3u);
 
   const testingPortalData = usePortalsStore(s =>
     testingPortal ? s.portals.find(p => p.id === testingPortal) : undefined
@@ -189,7 +177,7 @@ export const PortalList: React.FC = () => {
     setImporting(true);
     try {
       const entries = await fetchLatestBlogPortals();
-      setImportEntries(entries);
+      setImportEntries(entries.filter(e => e.type === 'mac'));
     } catch (e) {
       setImportEntries([]);
     } finally {
@@ -201,7 +189,7 @@ export const PortalList: React.FC = () => {
     setImporting(true);
     try {
       const entries = await fetchPortalsFromUrl(url);
-      setImportEntries(entries);
+      setImportEntries(entries.filter(e => e.type === 'mac'));
       setShowUrlImport(false);
     } catch (e) {
       alert('Failed to fetch: ' + (e instanceof Error ? e.message : 'Unknown error'));
@@ -246,15 +234,7 @@ export const PortalList: React.FC = () => {
     if (!importEntries) return;
     let added = 0;
     for (const entry of importEntries) {
-      if (entry.type === 'm3u' && entry.m3uUrl) {
-        addM3u({
-          name: entry.name,
-          sourceType: 'url',
-          url: entry.m3uUrl,
-          isActive: false,
-        });
-        added++;
-      } else if (entry.type === 'mac' && entry.mac) {
+      if (entry.type === 'mac' && entry.mac) {
         const dup = portals.some(
           p => p.mac.toLowerCase() === entry.mac!.toLowerCase() && p.portalUrl === entry.portalUrl
         );
@@ -307,15 +287,16 @@ export const PortalList: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const json = JSON.parse(ev.target?.result as string);
-        const entries: BlogPortalEntry[] = (json.portals || json || []).map((p: any) => ({
-          name: p.name || p.portalUrl || 'Unknown',
-          portalUrl: p.portalUrl || '',
-          mac: p.mac || '',
-        })).filter((e: BlogPortalEntry) => e.portalUrl && e.mac);
-        setImportEntries(entries);
+      reader.onload = (ev) => {
+        try {
+          const json = JSON.parse(ev.target?.result as string);
+          const entries: BlogPortalEntry[] = (json.portals || json || []).map((p: any) => ({
+            type: 'mac',
+            name: p.name || p.portalUrl || 'Unknown',
+            portalUrl: p.portalUrl || '',
+            mac: p.mac || '',
+          })).filter((e: BlogPortalEntry) => e.portalUrl && e.mac);
+          setImportEntries(entries);
       } catch { alert('Invalid JSON file'); }
     };
     reader.readAsText(file);
@@ -328,7 +309,7 @@ export const PortalList: React.FC = () => {
     setImporting(true);
     try {
       const entries = await fetchPortalsFromUrl(targetUrl);
-      setImportEntries(entries);
+      setImportEntries(entries.filter((e: BlogPortalEntry) => e.type === 'mac'));
       addSavedImportUrl(targetUrl);
       setShowUrlImport(false);
       setImportUrl('');
@@ -340,12 +321,7 @@ export const PortalList: React.FC = () => {
   };
 
   const uniquePortalsCount = importEntries
-    ? importEntries.filter(e => {
-        if (e.type === 'mac') {
-          return !portals.some(p => p.mac?.toLowerCase() === e.mac?.toLowerCase() && p.portalUrl === e.portalUrl);
-        }
-        return true; // M3U entries are always new
-      }).length
+    ? importEntries.filter(e => e.type === 'mac' && !portals.some(p => p.mac?.toLowerCase() === e.mac?.toLowerCase() && p.portalUrl === e.portalUrl)).length
     : 0;
 
   const getStatusColor = (portal: PortalAccount) => {
@@ -453,6 +429,7 @@ export const PortalList: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-3">
+            {/* 1. Add Portal */}
             <button
               ref={addButtonRef}
               id="add-portal-btn"
@@ -469,34 +446,8 @@ export const PortalList: React.FC = () => {
               <Plus className="relative w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
               <span className="relative">{t('addPortal')}</span>
             </button>
-            <button
-              onClick={() => setShowM3uForm(true)}
-              data-tv-focusable
-              data-tv-id="add-m3u-btn"
-              className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 md:gap-3 overflow-hidden text-sm md:text-base"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <Plus className="relative w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
-              <span className="relative">M3U Playlist</span>
-            </button>
-            <button
-              onClick={handleExport}
-              className="group relative px-3 md:px-4 py-3 md:py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-1 md:gap-2 overflow-hidden text-sm md:text-base"
-              title="Export all portals as JSON"
-            >
-              <Upload className="relative w-4 h-4 md:w-5 md:h-5" />
-              <span className="relative hidden sm:inline whitespace-nowrap">Export</span>
-            </button>
-            {portals.length > 0 && (
-              <button
-                onClick={() => setDeletingAll(true)}
-                className="group relative px-3 md:px-4 py-3 md:py-4 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-1 md:gap-2 overflow-hidden text-sm md:text-base"
-                title="Delete all portals"
-              >
-                <Trash2 className="relative w-4 h-4 md:w-5 md:h-5" />
-                <span className="relative hidden sm:inline whitespace-nowrap">Delete All</span>
-              </button>
-            )}
+
+            {/* 2. Import */}
             <div className="relative">
               <button
                 onClick={() => { if (showUrlImport) setShowBlogSources(false); setShowUrlImport(!showUrlImport); }}
@@ -550,7 +501,6 @@ export const PortalList: React.FC = () => {
                         Go
                       </button>
                     </div>
-                    {/* Saved URLs */}
                     {getSavedImportUrls().length > 0 && (
                       <div className="mt-2">
                         <button
@@ -589,7 +539,17 @@ export const PortalList: React.FC = () => {
               )}
             </div>
 
-            {/* Import from blogs button */}
+            {/* 3. Export */}
+            <button
+              onClick={handleExport}
+              className="group relative px-3 md:px-4 py-3 md:py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-1 md:gap-2 overflow-hidden text-sm md:text-base"
+              title="Export all portals as JSON"
+            >
+              <Upload className="relative w-4 h-4 md:w-5 md:h-5" />
+              <span className="relative hidden sm:inline whitespace-nowrap">Export</span>
+            </button>
+
+            {/* 4. Import from blogs */}
             <div className="relative">
               <button
                 onClick={() => {
@@ -609,6 +569,18 @@ export const PortalList: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* 5. Delete All */}
+            {portals.length > 0 && (
+              <button
+                onClick={() => { setDeletingAll(true); setPortalsToKeep(new Set()); }}
+                className="group relative px-3 md:px-4 py-3 md:py-4 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl md:rounded-2xl font-semibold shadow-xl shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-1 md:gap-2 overflow-hidden text-sm md:text-base"
+                title="Delete all portals"
+              >
+                <Trash2 className="relative w-4 h-4 md:w-5 md:h-5" />
+                <span className="relative hidden sm:inline whitespace-nowrap">Delete All</span>
+              </button>
+            )}
 
             {/* Hidden file inputs */}
             <input
@@ -811,164 +783,6 @@ export const PortalList: React.FC = () => {
         ))}
       </div>
 
-      {/* M3U Accounts Section */}
-      <div className="max-w-7xl mx-auto mt-12 mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">M3U Playlists</h2>
-            <p className="dark:text-slate-400 text-slate-600 text-sm">{m3uAccounts.length} playlist(s)</p>
-          </div>
-          <button
-            onClick={() => setShowM3uForm(true)}
-            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add M3U Playlist</span>
-          </button>
-        </div>
-        {m3uAccounts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {m3uAccounts.map((acct, idx) => (
-              <div
-                key={acct.id}
-                data-tv-id={`m3u-card-${acct.id}`}
-                data-tv-focusable
-                data-tv-group="m3u-cards"
-                data-tv-index={idx}
-                tabIndex={0}
-                className={`group relative backdrop-blur-xl rounded-2xl md:rounded-3xl p-4 md:p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 cursor-pointer dark:border border-white/10 border-gray-300/20 ${
-                  acct.id === activeM3uId
-                    ? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-400/30 shadow-xl shadow-cyan-500/20'
-                    : 'dark:bg-slate-800/50 bg-white/50 hover:dark:bg-slate-700/60 hover:bg-gray-200/60 dark:border-slate-700/50 border-gray-300/50'
-                }`}
-              >
-                <div className="flex items-start gap-3 mb-4 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    acct.id === activeM3uId
-                      ? 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-400/20'
-                      : 'dark:bg-slate-700/50 bg-gray-100/50'
-                  }`}>
-                    {acct.id === activeM3uId
-                      ? <CheckCircle className="w-5 h-5 text-emerald-400" />
-                      : <Circle className="w-5 h-5 text-slate-400" />
-                    }
-                  </div>
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <h3 className="font-bold text-base dark:text-white text-slate-900 truncate">{acct.name}</h3>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <span className="inline-flex items-center gap-1 text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full">
-                        {acct.sourceType === 'url' ? 'M3U URL' : acct.sourceType === 'xtream' ? 'Xtream' : 'Local File'}
-                      </span>
-                      {acct.id === activeM3uId && (
-                        <span className="inline-flex items-center text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full animate-pulse">Active</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {acct.url && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-mono dark:text-slate-400 text-slate-500 truncate">{acct.url}</span>
-                  </div>
-                )}
-                {acct.serverUrl && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-mono dark:text-slate-400 text-slate-500 truncate">{acct.serverUrl}</span>
-                  </div>
-                )}
-                {(acct.channelCount ?? 0) > 0 && (
-                  <p className="text-xs dark:text-slate-500 text-slate-500">{acct.channelCount} channels</p>
-                )}
-
-                {acct.tags && acct.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {acct.tags.map((tag, i) => (
-                      <span key={i} className="text-xs dark:bg-slate-700/50 bg-gray-100/50 dark:text-slate-400 text-slate-500 px-2 py-0.5 rounded-full">{tag}</span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-4 pt-3 dark:border-t border-slate-700/50 border-t-gray-300/50 flex gap-2 justify-end">
-                  {acct.id !== activeM3uId ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActiveM3u(acct.id); }}
-                      className="p-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg transition-colors" title="Set active"
-                    >
-                      <Target className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setViewingM3u(acct); }}
-                      className="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors" title="View channels"
-                    >
-                      <Play className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setTestingM3u(acct); }}
-                    className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" title="Test"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditingM3u(acct); setShowM3uForm(true); }}
-                    className="p-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg transition-colors" title="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeletingM3u(acct); }}
-                    className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors" title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center border border-orange-400/20">
-              <FileText className="w-6 h-6 text-orange-400" />
-            </div>
-            <p className="text-sm dark:text-slate-400 text-slate-600">No M3U playlists yet</p>
-            <p className="text-xs dark:text-slate-500 text-slate-500 mt-1">Click "Add M3U Playlist" above to add one</p>
-          </div>
-        )}
-      </div>
-
-      {/* M3U Modal - View Channels */}
-      {viewingM3u && (
-        <M3uChannelList account={viewingM3u} onClose={() => setViewingM3u(null)} />
-      )}
-
-      {/* M3U Modal - Test */}
-      {testingM3u && (
-        <M3uTest account={testingM3u} onClose={() => setTestingM3u(null)} />
-      )}
-
-      {/* M3U Modal - Edit/Add Form */}
-      {showM3uForm && (
-        <M3uForm account={editingM3u} onClose={() => { setShowM3uForm(false); setEditingM3u(null); }} />
-      )}
-
-      {/* M3U Delete Confirmation */}
-      {deletingM3u && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-md border border-slate-700/50 p-6">
-            <h2 className="text-lg font-bold text-white mb-2">Delete M3U Playlist</h2>
-            <p className="text-sm text-slate-300 mb-2">Are you sure you want to delete <span className="font-semibold text-white">"{deletingM3u.name}"</span>?</p>
-            <p className="text-xs text-slate-500 mb-6">This action cannot be undone.</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setDeletingM3u(null)} className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 transition-colors text-sm">Cancel</button>
-              <button onClick={() => { deleteM3u(deletingM3u.id); setDeletingM3u(null); }} className="px-6 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg font-semibold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-2 text-sm">
-                <Trash2 className="w-4 h-4" /> Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Help text */}
       {portals.length > 0 && (
         <div className="max-w-7xl mx-auto mt-8 text-center text-sm dark:text-slate-500 text-slate-500">
@@ -977,7 +791,7 @@ export const PortalList: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {portals.length === 0 && m3uAccounts.length === 0 && (
+      {portals.length === 0 && (
         <div className="max-w-2xl mx-auto text-center py-12 md:py-20">
           <div className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-2xl md:rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center backdrop-blur-sm border border-emerald-400/20 shadow-xl shadow-emerald-500/10">
             <Globe className="w-8 h-8 md:w-12 md:h-12 text-emerald-400" />
@@ -1079,27 +893,72 @@ export const PortalList: React.FC = () => {
       {/* Delete All Confirmation Modal */}
       {deletingAll && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[95vw] md:max-w-md border border-slate-700/50 overflow-hidden">
-            <div className="p-4 md:p-6 border-b border-slate-700/50 bg-gradient-to-r from-red-500/10 to-orange-500/10">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[95vw] md:max-w-lg border border-slate-700/50 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-4 md:p-6 border-b border-slate-700/50 bg-gradient-to-r from-red-500/10 to-orange-500/10 flex-shrink-0">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-red-500/20 flex items-center justify-center backdrop-blur-sm border border-red-400/20 flex-shrink-0">
                   <Trash2 className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg md:text-xl font-bold text-white">Delete All Portals</h2>
-                  <p className="text-xs md:text-sm text-slate-400">This action cannot be undone</p>
+                  <p className="text-xs md:text-sm text-slate-400">Check portals you want to keep</p>
                 </div>
               </div>
             </div>
-            <div className="p-4 md:p-6">
-              <p className="text-sm md:text-base text-slate-300 mb-2">
-                Are you sure you want to delete all <span className="font-semibold text-white">{portals.length} portal(s)</span>?
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-2">
+                  <p className="text-xs md:text-sm text-slate-400 mb-3">
+                Select which portals to <span className="text-emerald-400 font-semibold">keep</span> — unchecked ones will be deleted.
               </p>
-              <p className="text-xs md:text-sm text-slate-500">
-                All portal data including cached channels, EPG, and favorites will be permanently removed.
-              </p>
+              <label className="flex items-center gap-3 p-2 mb-2 rounded-xl cursor-pointer bg-slate-800/30 hover:bg-slate-700/30 transition-colors border border-slate-700/30">
+                <input
+                  type="checkbox"
+                  checked={portalsToKeep.size === portals.length}
+                  onChange={() => {
+                    if (portalsToKeep.size === portals.length) {
+                      setPortalsToKeep(new Set());
+                    } else {
+                      setPortalsToKeep(new Set(portals.map(p => p.id)));
+                    }
+                  }}
+                  className="w-5 h-5 rounded accent-emerald-500 cursor-pointer flex-shrink-0"
+                />
+                <span className="text-sm font-medium text-slate-300">{portalsToKeep.size === portals.length ? 'Deselect All' : 'Select All'}</span>
+                <span className="text-xs text-slate-500 ml-auto">{portalsToKeep.size}/{portals.length} kept</span>
+              </label>
+              {portals.map((portal) => {
+                const isKept = portalsToKeep.has(portal.id);
+                return (
+                  <label
+                    key={portal.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                      isKept ? 'dark:bg-slate-800/50 bg-gray-100/50 dark:border-green-700/30 border-green-400/30 border' : 'dark:bg-slate-800/20 bg-gray-100/30 dark:border-red-700/30 border-red-400/30 border opacity-60'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isKept}
+                      onChange={() => {
+                        setPortalsToKeep(prev => {
+                          const next = new Set(prev);
+                          if (next.has(portal.id)) next.delete(portal.id);
+                          else next.add(portal.id);
+                          return next;
+                        });
+                      }}
+                      className="w-5 h-5 rounded accent-emerald-500 cursor-pointer flex-shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium dark:text-white text-slate-900 truncate">{portal.name}</p>
+                      <p className="text-xs dark:text-slate-400 text-slate-500 truncate">{portal.portalUrl}</p>
+                    </div>
+                    <span className={`text-xs flex-shrink-0 ${isKept ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {isKept ? 'Kept' : 'Delete'}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 p-4 md:p-6 pt-2 border-t border-slate-700/50">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 p-4 md:p-6 pt-2 border-t border-slate-700/50 flex-shrink-0">
               <button
                 onClick={() => setDeletingAll(false)}
                 className="w-full sm:w-auto px-4 md:px-5 py-2 md:py-2.5 border border-slate-600 text-slate-300 rounded-lg md:rounded-xl hover:bg-slate-700/50 hover:text-white transition-all duration-200 hover:scale-105 text-sm md:text-base"
@@ -1108,16 +967,17 @@ export const PortalList: React.FC = () => {
               </button>
               <button
                 onClick={async () => {
-                  const ids = [...portals.map(p => p.id)];
+                  const toDelete = portals.filter(p => !portalsToKeep.has(p.id));
                   setDeletingAll(false);
-                  for (const id of ids) {
-                    await deletePortal(id);
+                  for (const portal of toDelete) {
+                    await deletePortal(portal.id);
                   }
                 }}
-                className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg md:rounded-xl font-semibold hover:from-red-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-lg shadow-red-500/25 text-sm md:text-base"
+                disabled={!portals.some(p => !portalsToKeep.has(p.id))}
+                className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg md:rounded-xl font-semibold hover:from-red-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-lg shadow-red-500/25 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                Delete All
+                Delete {portals.filter(p => !portalsToKeep.has(p.id)).length} portal(s)
               </button>
             </div>
           </div>
@@ -1152,25 +1012,18 @@ export const PortalList: React.FC = () => {
                 <p className="text-sm text-slate-400 text-center py-8">No items found. The page may have changed or is unreachable.</p>
               )}
               {importEntries.map((entry, i) => {
-                const isDup = entry.type === 'mac'
-                  ? portals.some(p => p.mac?.toLowerCase() === entry.mac?.toLowerCase() && p.portalUrl === entry.portalUrl)
-                  : false;
+                const isDup = portals.some(p => p.mac?.toLowerCase() === entry.mac?.toLowerCase() && p.portalUrl === entry.portalUrl);
                 return (
                   <div
-                    key={`${entry.type}-${entry.portalUrl}-${entry.mac || entry.m3uUrl}-${i}`}
+                    key={`${entry.portalUrl}-${entry.mac}-${i}`}
                     className={`flex items-center gap-3 p-2 md:p-3 rounded-lg md:rounded-xl text-xs md:text-sm ${
                       isDup ? 'dark:bg-slate-800/30 bg-gray-100/30 opacity-50' : 'dark:bg-slate-800/50 bg-gray-100/50'
                     }`}
                   >
-                    {entry.type === 'm3u' ? (
-                      <FileText className="w-3 h-3 text-cyan-400 flex-shrink-0" />
-                    ) : (
-                      <Monitor className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-                    )}
+                    <Monitor className="w-3 h-3 text-emerald-400 flex-shrink-0" />
                     <span className="font-mono text-[10px] md:text-xs dark:text-slate-400 text-slate-500 w-16 md:w-24 flex-shrink-0 truncate">{entry.name}</span>
-                    <span className="font-mono text-[10px] md:text-xs dark:text-slate-300 text-slate-600 flex-1 truncate">{entry.type === 'm3u' ? entry.m3uUrl : entry.portalUrl}</span>
-                    {entry.type === 'mac' && <span className="font-mono text-[10px] md:text-xs dark:text-slate-300 text-slate-600 w-24 md:w-28 flex-shrink-0">{entry.mac}</span>}
-                    {entry.type === 'm3u' && <span className="text-[10px] md:text-xs text-cyan-400 flex-shrink-0">M3U</span>}
+                    <span className="font-mono text-[10px] md:text-xs dark:text-slate-300 text-slate-600 flex-1 truncate">{entry.portalUrl}</span>
+                    <span className="font-mono text-[10px] md:text-xs dark:text-slate-300 text-slate-600 w-24 md:w-28 flex-shrink-0">{entry.mac}</span>
                     {isDup && <span className="text-[10px] md:text-xs text-amber-400 flex-shrink-0">dup</span>}
                   </div>
                 );

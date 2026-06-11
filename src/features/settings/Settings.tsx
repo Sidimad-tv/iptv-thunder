@@ -390,6 +390,52 @@ export const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                         onCheckedChange={(v) => updateSetting('hardwareAcceleration', v)}
                       />
                     </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium dark:text-white text-slate-900">Always on Top</p>
+                        <p className="text-sm dark:text-slate-400 text-slate-600">Keep player window above others</p>
+                      </div>
+                      <Switch
+                        data-tv-focusable="true"
+                        data-tv-id="settings-always-on-top"
+                        data-tv-group="settings-content"
+                        data-tv-index="35"
+                        tabIndex={0}
+                        checked={settings.alwaysOnTop}
+                        onCheckedChange={(v) => updateSetting('alwaysOnTop', v)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium dark:text-white text-slate-900">Multi Window</p>
+                        <p className="text-sm dark:text-slate-400 text-slate-600">Allow opening several channels in separate windows</p>
+                      </div>
+                      <Switch
+                        data-tv-focusable="true"
+                        data-tv-id="settings-multi-window"
+                        data-tv-group="settings-content"
+                        data-tv-index="36"
+                        tabIndex={0}
+                        checked={settings.multiWindow}
+                        onCheckedChange={(v) => updateSetting('multiWindow', v)}
+                      />
+                    </div>
+
+                    {/* VLC Path */}
+                    <div>
+                      <label className="text-sm dark:text-slate-400 text-slate-600 mb-2 block">VLC executable path</label>
+                      <input type="text"
+                        data-tv-focusable data-tv-id="settings-vlc-path" data-tv-group="settings-content" data-tv-index="37" tabIndex={0}
+                        value={settings.vlcPath}
+                        onChange={(e) => updateSetting('vlcPath', e.target.value)}
+                        placeholder="C:\Program Files\VideoLAN\VLC\vlc.exe"
+                        className="w-full px-4 py-3 dark:bg-slate-800 bg-white dark:border border-slate-700 border-gray-300 rounded-lg dark:text-white text-slate-900 text-sm font-mono"
+                      />
+                      <p className="text-xs dark:text-slate-500 text-slate-500 mt-1">Leave empty to auto-detect</p>
+                    </div>
+
                   </div>
                 )}
 

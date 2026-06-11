@@ -6,6 +6,8 @@ export interface M3uChannel {
   logo: string;
   group: string;
   streamUrl: string;
+  tv_genre_id?: string;
+  number?: number;
 }
 
 export interface M3uAccount {

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useM3uStore } from '@/store/m3u.store';
 import { M3uAccount, M3uFormData, M3uSourceType } from './m3u.types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { parseM3u } from '@/utils/m3uParser';
+import { parseM3uText } from '@/utils/m3uParser';
+import { useToast } from '@/components/ui/Toast';
 import { X, Save, Download, Upload, Trash2 } from 'lucide-react';
 import { getSavedM3uUrls, addSavedM3uUrl, removeSavedM3uUrl, importSavedM3uUrls, exportSavedM3uUrls, DEFAULT_M3U_URLS } from '@/utils/m3uUrlManager';
 
@@ -13,9 +14,10 @@ interface M3uFormProps {
 
 export const M3uForm: React.FC<M3uFormProps> = ({ account, onClose }) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const modalRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { addM3u, updateM3u } = useM3uStore();
+  const { addM3u, updateM3u, accounts } = useM3uStore();
 
   const [importExportStatus, setImportExportStatus] = useState<string | null>(null);
   const m3uFileInputRef = useRef<HTMLInputElement>(null);
@@ -48,8 +50,22 @@ export const M3uForm: React.FC<M3uFormProps> = ({ account, onClose }) => {
     modalRef.current?.focus();
   }, [account]);
 
+  const isDuplicate = (): boolean => {
+    return accounts.some(a => {
+      if (a.id === account?.id) return false;
+      if (formData.sourceType === 'url' && a.url && a.url === formData.url) return true;
+      if (formData.sourceType === 'xtream' && a.serverUrl && a.serverUrl === formData.serverUrl && a.username === formData.username) return true;
+      if (formData.sourceType === 'file' && a.name === formData.name.trim()) return true;
+      return false;
+    });
+  };
+
   const handleSubmit = async () => {
     if (!formData.name.trim()) return;
+    if (!account && isDuplicate()) {
+      showToast('This M3U account already exists', 'error');
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (account) {
@@ -73,27 +89,30 @@ export const M3uForm: React.FC<M3uFormProps> = ({ account, onClose }) => {
     }
   };
 
-  const handleFileLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const content = ev.target?.result as string;
-      if (content) {
-        const channels = parseM3u(content);
-        addM3u({
-          name: file.name.replace(/\.m3u8?$/i, ''),
-          sourceType: 'file',
-          description: `${file.name} (${channels.length} channels)`,
-          tags: [],
-          channels,
-          channelCount: channels.length,
-          isActive: false,
-        });
-        onClose();
-      }
-    };
-    reader.readAsText(file);
+    const fileName = file.name.replace(/\.m3u8?$/i, '');
+    if (accounts.some(a => a.sourceType === 'file' && a.name === fileName && a.id !== account?.id)) {
+      showToast('A file with this name is already loaded', 'error');
+      return;
+    }
+    try {
+      const content = await file.text();
+      const channels = await parseM3uText(content);
+      addM3u({
+        name: fileName,
+        sourceType: 'file',
+        description: `${file.name} (${channels.length} channels)`,
+        tags: [],
+        channels,
+        channelCount: channels.length,
+        isActive: false,
+      });
+      onClose();
+    } catch (err) {
+      console.error('Failed to parse M3U file:', err);
+    }
     e.target.value = '';
   };
 
