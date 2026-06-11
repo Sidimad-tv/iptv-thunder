@@ -18,3 +18,9 @@ project.md
 Arabic_LiveTV.m3u
 update-tool/
 *.bak
+
+2/
+1/
+exec/*.exe
+exec/*.dll
+src-tauri/gen/schemas/

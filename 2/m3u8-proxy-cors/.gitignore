@@ -1,6 +1,0 @@
-/node_modules/
-/static/external_assets/
-.idea/
-/static/private_assets/
-*.zip
-.vercel

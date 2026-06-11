@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { M3uAccount } from './m3u.types';
-import { fetchM3uChannels, fetchXtreamChannels } from '@/utils/m3uParser';
+import { loadM3uContent } from '@/utils/m3uParser';
 
 interface M3uTestProps {
   account: M3uAccount;
@@ -25,17 +25,8 @@ export const M3uTest: React.FC<M3uTestProps> = ({ account, onClose }) => {
     const startTime = Date.now();
 
     try {
-      let channelCount = 0;
-
-      if (account.sourceType === 'xtream' && account.serverUrl && account.username && account.password) {
-        const result = await fetchXtreamChannels(account.serverUrl, account.username, account.password);
-        channelCount = result.channels.length;
-      } else if (account.url) {
-        const channels = await fetchM3uChannels(account.url);
-        channelCount = channels.length;
-      } else {
-        throw new Error('No URL or Xtream credentials configured');
-      }
+      const result = await loadM3uContent(account);
+      const channelCount = result.channels.length;
 
       const responseTime = Date.now() - startTime;
 

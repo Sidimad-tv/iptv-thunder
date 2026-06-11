@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useM3uStore } from '@/store/m3u.store';
 import { M3uAccount, M3uFormData, M3uSourceType } from './m3u.types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { parseM3uText } from '@/utils/m3uParser';
+import { parseM3uLines } from '@/utils/m3uParser';
 import { useToast } from '@/components/ui/Toast';
 import { X, Save, Download, Upload, Trash2 } from 'lucide-react';
 import { getSavedM3uUrls, addSavedM3uUrl, removeSavedM3uUrl, importSavedM3uUrls, exportSavedM3uUrls, DEFAULT_M3U_URLS } from '@/utils/m3uUrlManager';
@@ -99,7 +99,7 @@ export const M3uForm: React.FC<M3uFormProps> = ({ account, onClose }) => {
     }
     try {
       const content = await file.text();
-      const channels = await parseM3uText(content);
+      const channels = parseM3uLines(content);
       addM3u({
         name: fileName,
         sourceType: 'file',

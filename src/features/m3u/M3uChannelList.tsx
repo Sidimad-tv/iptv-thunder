@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { M3uAccount, M3uChannel, M3uContentType, M3uCategory } from './m3u.types';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import type { M3uAccount, M3uChannel, M3uContentType, M3uCategory } from './m3u.types';
 import { useM3uStore } from '@/store/m3u.store';
 import { usePlaybackStore } from '@/store/playback.store';
-import { Search, RefreshCw, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { ChannelLogo } from '@/features/tv/ChannelLogo';
+import { Search, RefreshCw, Loader2, Heart } from 'lucide-react';
 
 interface M3uChannelListProps {
   account: M3uAccount;
@@ -24,6 +22,10 @@ const saveFavorites = (accountId: string, favs: Set<string>) => {
   localStorage.setItem(getFavKey(accountId), JSON.stringify(Array.from(favs)));
 };
 
+const ITEM_HEIGHT = 64;
+const GRID_GAP = 12;
+const OVERSCAN = 3;
+
 export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose, page, contentTypeFilter, defaultFavoritesOnly }) => {
   const [allChannels, setAllChannels] = useState<M3uChannel[]>([]);
   const [categories, setCategories] = useState<M3uCategory[]>([]);
@@ -33,6 +35,10 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites(account.id));
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(4);
 
   const storeLoadChannels = useM3uStore(s => s.loadChannels);
   const invalidateCache = useM3uStore(s => s.invalidateCache);
@@ -47,7 +53,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
     setError(null);
     try {
       if (forceRefresh) invalidateCache(account.id);
-      const result = await storeLoadChannels(account.id);
+      const result = await storeLoadChannels(account.id, forceRefresh);
       setAllChannels(result.channels);
       setCategories(result.categories);
       if (!contentTypeFilter && !defaultFavoritesOnly) {
@@ -64,6 +70,21 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
   }, [account.id, storeLoadChannels, invalidateCache, contentTypeFilter, defaultFavoritesOnly]);
 
   useEffect(() => { loadData(false); }, [loadData]);
+
+  useEffect(() => {
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w < 480) setColumns(2);
+        else if (w < 640) setColumns(3);
+        else if (w < 800) setColumns(4);
+        else if (w < 1024) setColumns(5);
+        else setColumns(6);
+      }
+    });
+    if (gridRef.current) observer.observe(gridRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const handleGroupChange = useCallback((groupId: string) => {
     setActiveGroup(groupId);
@@ -100,15 +121,32 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
     return result;
   }, [channels, search, showFavoritesOnly, favorites]);
 
-  const handlePlay = (ch: M3uChannel) => {
+  const handlePlay = useCallback((ch: M3uChannel) => {
     usePlaybackStore.getState().setMedia({
       url: ch.streamUrl,
       name: ch.name,
       isVod: ch.contentType === 'movie' || ch.contentType === 'series',
     });
-  };
+  }, []);
 
   const handleRefresh = () => loadData(true);
+
+  const totalItems = filteredChannels.length;
+  const rows = Math.ceil(totalItems / columns);
+  const totalHeight = rows * (ITEM_HEIGHT + GRID_GAP);
+
+  const startRow = Math.max(0, Math.floor(scrollTop / (ITEM_HEIGHT + GRID_GAP)) - OVERSCAN);
+  const endRow = Math.min(rows, Math.ceil((scrollTop + (scrollRef.current?.clientHeight || 800)) / (ITEM_HEIGHT + GRID_GAP)) + OVERSCAN);
+
+  const visibleChannels = useMemo(() => {
+    const start = startRow * columns;
+    const end = Math.min(endRow * columns, totalItems);
+    return filteredChannels.slice(start, end);
+  }, [filteredChannels, startRow, endRow, columns]);
+
+  const handleScroll = useCallback(() => {
+    if (scrollRef.current) setScrollTop(scrollRef.current.scrollTop);
+  }, []);
 
   return (
     <div className={page ? '' : "fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4"}>
@@ -121,7 +159,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
             </button>
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-white truncate">{account.name}</h2>
-              <p className="text-xs text-slate-400">{allChannels.length} channels{contentTypeFilter ? ` (${contentTypeFilter})` : ''}</p>
+              <p className="text-xs text-slate-400">{allChannels.length} channels</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -130,7 +168,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
               className={`p-2 rounded-lg transition-colors ${showFavoritesOnly ? 'bg-pink-500/30 text-pink-300 border border-pink-400/30' : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-300'}`}
               title={showFavoritesOnly ? 'Show all channels' : 'Show favorites only'}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showFavoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+              <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
             </button>
             <button onClick={handleRefresh} disabled={loading} className="p-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-lg transition-colors disabled:opacity-50" title="Reload">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -154,7 +192,7 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
           </div>
         )}
 
-        <div className="p-4 border-b border-slate-700/50">
+        <div className="p-4 pb-2 border-b border-slate-700/50">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search channels..." className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500/50" />
@@ -176,45 +214,35 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
         )}
 
         {!loading && !error && (
-          <div className="flex-1 overflow-y-auto p-4">
-            {filteredChannels.length === 0 ? (
-              <div className="text-center py-10 text-slate-500">
+          <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto">
+            {totalItems === 0 ? (
+              <div className="text-center py-20 text-slate-500">
                 {search ? 'No channels match your search' : (showFavoritesOnly ? 'No favorites yet. Click the heart icon on a channel to add it.' : 'No channels found')}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 min-w-0 overflow-hidden">
-                {filteredChannels.map((ch, idx) => (
-                  <motion.div
-                    key={ch.id}
-                    data-tv-focusable data-tv-id={`m3u-channel-${ch.id}`} data-tv-group="m3u-channels"
-                    data-tv-index={idx} data-tv-initial={idx === 0}
-                    tabIndex={0}
-                    onClick={() => handlePlay(ch)}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.15, delay: Math.min(idx * 0.02, 1.5) }}
-                    whileHover={{ scale: 1.05, y: -4, boxShadow: '0 10px 40px rgba(34, 197, 94, 0.2)' }}
-                    whileTap={{ scale: 0.98 }}
-                    className="p-2 rounded-lg cursor-pointer dark:bg-slate-800/30 bg-gray-100/30 dark:hover:bg-slate-700/50 hover:bg-gray-200/50 dark:hover:border-green-700 hover:border-green-700 transition-all dark:focus:bg-slate-700/50 focus:bg-gray-200/50 dark:focus:border-green-700 focus:border-green-700 backdrop-blur-sm"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm dark:text-white text-slate-900 truncate">{ch.name}</h3>
-                      </div>
-                      <motion.button
-                        tabIndex={-1}
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(ch); }}
-                        whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }}
-                        className="ml-2 text-lg"
-                      >
-                        <motion.span animate={favorites.has(ch.id) ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
-                          {favorites.has(ch.id) ? '❤️' : '🤍'}
-                        </motion.span>
-                      </motion.button>
-                    </div>
-                    {!!ch.logo && <ChannelLogo logo={ch.logo} name={ch.name} />}
-                  </motion.div>
-                ))}
+              <div ref={gridRef} className="p-4" style={{ height: totalHeight, position: 'relative' }}>
+                <div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    padding: '0 16px',
+                    transform: `translateY(${startRow * (ITEM_HEIGHT + GRID_GAP)}px)`,
+                  }}
+                >
+                  {visibleChannels.map((ch) => (
+                    <ChannelCard
+                      key={ch.id}
+                      channel={ch}
+                      isFavorite={favorites.has(ch.id)}
+                      onPlay={handlePlay}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -225,3 +253,37 @@ export const M3uChannelList: React.FC<M3uChannelListProps> = ({ account, onClose
     </div>
   );
 };
+
+interface ChannelCardProps {
+  channel: M3uChannel;
+  isFavorite: boolean;
+  onPlay: (ch: M3uChannel) => void;
+  onToggleFavorite: (ch: M3uChannel) => void;
+}
+
+const ChannelCard = React.memo<ChannelCardProps>(({ channel: ch, isFavorite, onPlay, onToggleFavorite }) => (
+  <div
+    tabIndex={0}
+    onClick={() => onPlay(ch)}
+    className="p-2 rounded-lg cursor-pointer bg-slate-800/30 hover:bg-slate-700/50 hover:border-green-700 transition-colors focus:bg-slate-700/50 focus:border-green-700 backdrop-blur-sm border border-transparent"
+  >
+    <div className="flex justify-between items-start">
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-sm text-white truncate">{ch.name}</h3>
+      </div>
+      <button
+        tabIndex={-1}
+        onClick={(e) => { e.stopPropagation(); onToggleFavorite(ch); }}
+        className="ml-1 flex-shrink-0 p-0.5"
+      >
+        {isFavorite ? (
+          <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400" />
+        ) : (
+          <Heart className="w-3.5 h-3.5 text-slate-500 hover:text-pink-400" />
+        )}
+      </button>
+    </div>
+  </div>
+));
+
+ChannelCard.displayName = 'ChannelCard';

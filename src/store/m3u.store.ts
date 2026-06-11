@@ -1,22 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { M3uAccount, M3uChannel, M3uCategory } from '@/features/m3u/m3u.types';
+import type { M3uAccount, M3uChannel, M3uCategory } from '@/features/m3u/m3u.types';
 import { loadM3uContent } from '@/utils/m3uParser';
+import { getCached, setCached, hydrateFromIdb, invalidateCache as idbInvalidate } from '@/lib/idbCache';
 import { createLogger } from '@/lib/logger';
 import { tauriStorage } from '@/lib/tauriStorage';
-const logger = createLogger('M3U');
 
-interface ChannelCache {
-  categories: M3uCategory[];
-  channels: M3uChannel[];
-  updatedAt: number;
-}
+const logger = createLogger('M3U');
+const M3U_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
 interface M3uState {
   accounts: M3uAccount[];
   activeM3uId: string | null;
-  channelCache: Record<string, ChannelCache>;
 
   addM3u: (data: Omit<M3uAccount, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateM3u: (id: string, updates: Partial<M3uAccount>) => void;
@@ -25,7 +21,7 @@ interface M3uState {
   getActiveM3u: () => M3uAccount | null;
   deduplicateM3u: () => void;
   removeNonWorkingM3u: () => void;
-  loadChannels: (accountId: string) => Promise<{ categories: M3uCategory[]; channels: M3uChannel[] }>;
+  loadChannels: (accountId: string, forceRefresh?: boolean) => Promise<{ categories: M3uCategory[]; channels: M3uChannel[] }>;
   invalidateCache: (accountId: string) => void;
 }
 
@@ -34,7 +30,6 @@ export const useM3uStore = create<M3uState>()(
     immer((set, get) => ({
     accounts: [],
     activeM3uId: null,
-    channelCache: {},
 
     addM3u: (data) => {
       set((state) => {
@@ -64,8 +59,8 @@ export const useM3uStore = create<M3uState>()(
         const idx = state.accounts.findIndex((p) => p.id === id);
         if (idx > -1) state.accounts.splice(idx, 1);
         if (state.activeM3uId === id) state.activeM3uId = null;
-        delete state.channelCache[id];
       });
+      idbInvalidate(id);
     },
 
     setActiveM3u: (id) => {
@@ -111,31 +106,37 @@ export const useM3uStore = create<M3uState>()(
       }
     },
 
-    loadChannels: async (accountId: string) => {
-      const state = get();
-      const cache = state.channelCache[accountId];
-      if (cache) return { categories: cache.categories, channels: cache.channels };
+    loadChannels: async (accountId: string, forceRefresh?: boolean) => {
+      if (!forceRefresh) {
+        await hydrateFromIdb(accountId, 'channels');
+        const hit = getCached<{ categories: M3uCategory[]; channels: M3uChannel[] }>(accountId, 'channels');
+        if (hit && hit.fresh) return hit.data;
+        if (hit && !hit.fresh) {
+          logger.debug(`Stale cache for ${accountId}, returning stale + refreshing`);
+          setCached(accountId, 'channels', hit.data, M3U_CACHE_TTL);
+          loadM3uContent(get().accounts.find(a => a.id === accountId)!).then(data => {
+            setCached(accountId, 'channels', data, M3U_CACHE_TTL);
+          }).catch(e => logger.warn('Background refresh failed', e));
+          return hit.data;
+        }
+      }
 
-      const account = state.accounts.find(a => a.id === accountId);
+      const account = get().accounts.find(a => a.id === accountId);
       if (!account) throw new Error('Account not found');
 
       const result = await loadM3uContent(account);
-      set((s) => {
-        s.channelCache[accountId] = { categories: result.categories, channels: result.channels, updatedAt: Date.now() };
-      });
+      await setCached(accountId, 'channels', result, M3U_CACHE_TTL);
       return result;
     },
 
     invalidateCache: (accountId: string) => {
-      set((state) => { delete state.channelCache[accountId]; });
+      idbInvalidate(accountId, 'channels');
     },
   })),
   {
     name: 'm3u-accounts',
     storage: tauriStorage,
     partialize: (state) => ({
-      ...state,
-      channelCache: {},
       accounts: state.accounts.map((acct) => {
         if (acct.sourceType === 'file') return acct;
         const { channels: _ch, ...rest } = acct;

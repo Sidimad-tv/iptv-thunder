@@ -17,6 +17,7 @@ import { useTypedRouter, isMovieDetails, isSeriesDetails } from '@/hooks/useType
 import { usePlaybackManager } from '@/hooks/usePlaybackManager';
 import { useNavigationMenu } from '@/hooks/useNavigationMenu';
 import { useEpgCacheManager } from '@/features/epg/epg.hooks';
+import { useM3uWarmup } from '@/hooks/useM3uWarmup';
 import { AppLayout } from '@/components/AppLayout';
 import { AppContent } from '@/components/AppContent';
 import { StalkerAccount } from '@/types';
@@ -59,6 +60,9 @@ function AppInner() {
 
   // Manage EPG cache globally
   useEpgCacheManager();
+
+  // Pre-load M3U channels in background
+  useM3uWarmup();
 
   const activePortal = usePortalsStore(s =>
     s.portals.find(p => p.id === s.activePortalId) ?? null
